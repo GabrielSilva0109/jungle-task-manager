@@ -1,0 +1,5 @@
+{
+  "name": "@jungle/tsconfig",
+  "version": "1.0.0",
+  "files": ["base.json", "nextjs.json", "react-library.json"]
+}
