@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+// import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -17,20 +17,20 @@ async function bootstrap() {
     })
   );
 
-  // Microservice setup
-  const rmqUrl = configService.get<string>('RABBITMQ_URL');
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: [rmqUrl],
-      queue: 'auth_queue',
-      queueOptions: {
-        durable: false,
-      },
-    },
-  });
+  // Skip microservice setup for now - using HTTP directly
+  // const rmqUrl = configService.get<string>('RABBITMQ_URL');
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.RMQ,
+  //   options: {
+  //     urls: [rmqUrl],
+  //     queue: 'auth_queue',
+  //     queueOptions: {
+  //       durable: false,
+  //     },
+  //   },
+  // });
 
-  await app.startAllMicroservices();
+  // await app.startAllMicroservices();
   
   const port = configService.get<number>('PORT') || 3002;
   await app.listen(port);

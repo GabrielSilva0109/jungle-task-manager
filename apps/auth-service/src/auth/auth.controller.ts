@@ -1,7 +1,9 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
+  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -48,6 +50,17 @@ export class AuthController {
   async logout(@Req() req: Request): Promise<void> {
     const user = req.user as any;
     return this.authService.logout(user.userId);
+  }
+
+  @Get('user/:userId')
+  async getUser(@Param('userId') userId: string) {
+    const user = await this.authService.findById(userId);
+    if (!user) {
+      return null;
+    }
+    
+    const { password, refreshToken, ...sanitized } = user;
+    return sanitized;
   }
 
   // Microservice patterns

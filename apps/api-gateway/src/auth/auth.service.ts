@@ -22,7 +22,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/auth/register`, registerDto);
+      const response = await axios.post(`${this.authServiceUrl}/register`, registerDto);
       return response.data;
     } catch (error) {
       throw error;
@@ -31,7 +31,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/auth/login`, loginDto);
+      const response = await axios.post(`${this.authServiceUrl}/login`, loginDto);
       return response.data;
     } catch (error) {
       throw error;
@@ -40,7 +40,7 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/auth/refresh`, { refreshToken });
+      const response = await axios.post(`${this.authServiceUrl}/refresh`, { refreshToken });
       return response.data;
     } catch (error) {
       throw error;
@@ -49,7 +49,7 @@ export class AuthService {
 
   async logout(userId: string): Promise<void> {
     try {
-      await axios.post(`${this.authServiceUrl}/auth/logout`, { userId });
+      await axios.post(`${this.authServiceUrl}/logout`, { userId });
     } catch (error) {
       throw error;
     }
@@ -65,7 +65,7 @@ export class AuthService {
 
   async getUser(userId: string): Promise<any> {
     try {
-      const response = await axios.get(`${this.authServiceUrl}/auth/user/${userId}`);
+      const response = await axios.get(`${this.authServiceUrl}/user/${userId}`);
       return response.data;
     } catch (error) {
       return null;
