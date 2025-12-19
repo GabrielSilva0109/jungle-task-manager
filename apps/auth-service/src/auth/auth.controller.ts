@@ -75,7 +75,7 @@ export class AuthController {
   }
 
   @MessagePattern('auth.user')
-  async getUser(data: { userId: string }) {
+  async getUserByMessage(data: { userId: string }) {
     const user = await this.authService.findById(data.userId);
     if (!user) {
       return null;
