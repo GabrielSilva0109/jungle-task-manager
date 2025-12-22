@@ -84,4 +84,30 @@ export class AuthService {
       return [];
     }
   }
+
+  async updateUser(userId: string, updateData: { role?: string; isActive?: boolean }, requestingUserId: string): Promise<any> {
+    try {
+      const response = await axios.patch(`${this.authServiceUrl}/users/${userId}`, updateData, {
+        headers: {
+          'x-user-id': requestingUserId
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteUser(userId: string, requestingUserId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.delete(`${this.authServiceUrl}/users/${userId}`, {
+        headers: {
+          'x-user-id': requestingUserId
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

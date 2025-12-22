@@ -139,7 +139,7 @@ export class AuthService {
 
   async findAllUsers(): Promise<User[]> {
     return this.userRepository.find({
-      select: ['id', 'username', 'email', 'createdAt', 'updatedAt']
+      select: ['id', 'username', 'email', 'role', 'isActive', 'createdAt', 'updatedAt']
     });
   }
 
@@ -162,7 +162,48 @@ export class AuthService {
       expiresIn: 15 * 60, // 15 minutes in seconds
     };
   }
+  async updateUser(
+    id: string,
+    updateData: { role?: string; isActive?: boolean },
+    requestingUserId?: string
+  ): Promise<any> {
+    // For now, allow any user to update (in production, add admin check)
+    const user = await this.userRepository.findOne({ where: { id } });
+    
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
 
+    // Update user data
+    await this.userRepository.update(id, updateData);
+    
+    // Return updated user (sanitized)
+    const updatedUser = await this.userRepository.findOne({ where: { id } });
+    return this.sanitizeUser(updatedUser);
+  }
+
+  async deleteUser(
+    id: string,
+    requestingUserId?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Prevent self-deletion (basic protection)
+    if (requestingUserId === id) {
+      throw new BadRequestException('Cannot delete your own account');
+    }
+
+    await this.userRepository.delete(id);
+    
+    return { 
+      success: true, 
+      message: 'User deleted successfully' 
+    };
+  }
   private async updateRefreshToken(
     userId: string,
     refreshToken: string,

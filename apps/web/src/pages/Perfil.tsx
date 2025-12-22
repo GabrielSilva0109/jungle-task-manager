@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
 import { useAuthStore } from '../stores/auth';
 import { User, Mail, Calendar, Key, Edit, Save, X, Shield } from 'lucide-react';
+import { tasksApi } from '../services/api';
 
 export default function Perfil() {
   const { user } = useAuthStore();
   const [editMode, setEditMode] = useState(false);
+  const [profileStats, setProfileStats] = useState({
+    tasksCompleted: 0,
+    tasksInProgress: 0,
+    totalTasks: 0,
+    joinDate: user?.createdAt || '2024-01-10',
+    lastLogin: user?.updatedAt || '2024-01-15T14:30:00'
+  });
+  const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -24,13 +33,36 @@ export default function Perfil() {
     confirmPassword: ''
   });
 
-  // Mock data adicional do perfil
-  const profileStats = {
-    tasksCompleted: 24,
-    tasksInProgress: 5,
-    totalTasks: 35,
-    joinDate: '2024-01-10',
-    lastLogin: '2024-01-15T14:30:00'
+  useEffect(() => {
+    loadUserStats();
+  }, []);
+
+  const loadUserStats = async () => {
+    try {
+      setLoading(true);
+      // Get all tasks to calculate user-specific statistics
+      const tasksResponse = await tasksApi.getTasks({ page: 1, size: 1000 });
+      const allTasks = tasksResponse.data;
+      
+      // Filter tasks for current user (in a real app, this would be done server-side)
+      const userTasks = allTasks; // For now, showing all tasks since we don't have user-specific filtering
+      
+      const completed = userTasks.filter(task => task.status === 'DONE').length;
+      const inProgress = userTasks.filter(task => task.status === 'IN_PROGRESS').length;
+      const total = userTasks.length;
+      
+      setProfileStats({
+        tasksCompleted: completed,
+        tasksInProgress: inProgress,
+        totalTasks: total,
+        joinDate: user?.createdAt || '2024-01-10',
+        lastLogin: user?.updatedAt || new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas do usuário:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveProfile = () => {
@@ -226,26 +258,32 @@ export default function Perfil() {
         {/* Estatísticas */}
         <StandardCard title="Estatísticas">
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Tarefas Concluídas</span>
-              <span className="text-white font-semibold">{profileStats.tasksCompleted}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Tarefas em Progresso</span>
-              <span className="text-white font-semibold">{profileStats.tasksInProgress}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Total de Tarefas</span>
-              <span className="text-white font-semibold">{profileStats.totalTasks}</span>
-            </div>
-            <div className="border-t border-gray-700 pt-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Taxa de Conclusão</span>
-                <span className="text-white font-semibold">
-                  {Math.round((profileStats.tasksCompleted / profileStats.totalTasks) * 100)}%
-                </span>
-              </div>
-            </div>
+            {loading ? (
+              <div className="text-center text-gray-400">Carregando estatísticas...</div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Tarefas Concluídas</span>
+                  <span className="text-white font-semibold">{profileStats.tasksCompleted}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Tarefas em Progresso</span>
+                  <span className="text-white font-semibold">{profileStats.tasksInProgress}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Total de Tarefas</span>
+                  <span className="text-white font-semibold">{profileStats.totalTasks}</span>
+                </div>
+                <div className="border-t border-gray-700 pt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Taxa de Conclusão</span>
+                    <span className="text-white font-semibold">
+                      {profileStats.totalTasks > 0 ? Math.round((profileStats.tasksCompleted / profileStats.totalTasks) * 100) : 0}%
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </StandardCard>
 

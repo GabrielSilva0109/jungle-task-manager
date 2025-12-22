@@ -88,6 +88,7 @@ export default function Home() {
               variant="outline" 
               size="sm"
               style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+              onClick={() => {}}
             >
               Ver Todas
             </Button>

@@ -45,10 +45,8 @@ export class TasksService {
 
   async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
     try {
-      const response = await axios.patch(`${this.tasksServiceUrl}/tasks/${id}`, {
-        ...updateTaskDto,
-        userId,
-      });
+      // Don't send userId in body, let tasks-service handle user context
+      const response = await axios.patch(`${this.tasksServiceUrl}/tasks/${id}`, updateTaskDto);
       return response.data;
     } catch (error) {
       throw error;
@@ -57,9 +55,8 @@ export class TasksService {
 
   async remove(id: string, userId: string) {
     try {
-      const response = await axios.delete(`${this.tasksServiceUrl}/tasks/${id}`, {
-        data: { userId },
-      });
+      // Don't send userId in body, let tasks-service handle user context
+      const response = await axios.delete(`${this.tasksServiceUrl}/tasks/${id}`);
       return response.data;
     } catch (error) {
       throw error;

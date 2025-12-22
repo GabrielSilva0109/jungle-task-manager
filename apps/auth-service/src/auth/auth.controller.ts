@@ -2,12 +2,15 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Body,
   Param,
   HttpCode,
   HttpStatus,
   UseGuards,
   Req,
+  Headers,
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { Request } from 'express';
@@ -70,6 +73,23 @@ export class AuthController {
       const { password, refreshToken, ...sanitized } = user;
       return sanitized;
     });
+  }
+
+  @Patch('users/:id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() updateData: { role?: string; isActive?: boolean },
+    @Headers('x-user-id') requestingUserId?: string
+  ): Promise<any> {
+    return this.authService.updateUser(id, updateData, requestingUserId);
+  }
+
+  @Delete('users/:id')
+  async deleteUser(
+    @Param('id') id: string,
+    @Headers('x-user-id') requestingUserId?: string
+  ): Promise<{ success: boolean; message: string }> {
+    return this.authService.deleteUser(id, requestingUserId);
   }
 
   // Microservice patterns

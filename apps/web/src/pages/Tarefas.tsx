@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
-import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { tasksApi } from '../services/api';
 
 interface Task {
@@ -21,6 +21,8 @@ interface Task {
 export default function Tarefas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<{
@@ -105,6 +107,65 @@ export default function Tarefas() {
         setShowCreateForm(false);
       } catch (error) {
         console.error('Erro ao criar tarefa:', error);
+      }
+    }
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setNewTask({
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate || ''
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdateTask = async () => {
+    if (editingTask && newTask.title.trim()) {
+      try {
+        const taskData = {
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority === 'Baixa' ? 'LOW' as const :
+                   newTask.priority === 'Média' ? 'MEDIUM' as const : 'HIGH' as const,
+          deadline: newTask.dueDate || '2024-12-31T23:59:59.000Z'
+        };
+        
+        await tasksApi.updateTask(editingTask.id, taskData);
+        await loadTasks(); // Recarregar tarefas
+        setNewTask({ title: '', description: '', priority: 'Média', dueDate: '' });
+        setEditingTask(null);
+        setShowEditForm(false);
+      } catch (error) {
+        console.error('Erro ao atualizar tarefa:', error);
+      }
+    }
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: 'Pendente' | 'Em Progresso' | 'Concluída') => {
+    try {
+      const statusMapping = {
+        'Pendente': 'TODO',
+        'Em Progresso': 'IN_PROGRESS',
+        'Concluída': 'DONE'
+      };
+      
+      await tasksApi.updateTask(taskId, { status: statusMapping[newStatus] });
+      await loadTasks(); // Recarregar tarefas
+    } catch (error) {
+      console.error('Erro ao atualizar status da tarefa:', error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
+      try {
+        await tasksApi.deleteTask(taskId);
+        await loadTasks(); // Recarregar tarefas
+      } catch (error) {
+        console.error('Erro ao excluir tarefa:', error);
       }
     }
   };
@@ -197,6 +258,82 @@ export default function Tarefas() {
         </StandardCard>
       )}
 
+      {/* Formulário de edição de tarefa */}
+      {showEditForm && editingTask && (
+        <StandardCard 
+          title="Editar Tarefa" 
+          description="Modifique as informações da tarefa"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="text-white text-sm font-medium mb-2 block">Título</label>
+              <Input
+                value={newTask.title}
+                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                placeholder="Digite o título da tarefa..."
+                className="bg-gray-800 border-gray-700 text-white"
+              />
+            </div>
+            
+            <div>
+              <label className="text-white text-sm font-medium mb-2 block">Descrição</label>
+              <Textarea
+                value={newTask.description}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewTask({ ...newTask, description: e.target.value })}
+                placeholder="Descreva a tarefa..."
+                className="bg-gray-800 border-gray-700 text-white min-h-[100px]"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-white text-sm font-medium mb-2 block">Prioridade</label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewTask({ ...newTask, priority: e.target.value as 'Baixa' | 'Média' | 'Alta' })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2"
+                >
+                  <option value="Baixa">Baixa</option>
+                  <option value="Média">Média</option>
+                  <option value="Alta">Alta</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-white text-sm font-medium mb-2 block">Data de Entrega</label>
+                <Input
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 pt-4">
+              <Button 
+                onClick={handleUpdateTask}
+                style={{ backgroundColor: '#7fe41a', color: '#000000' }}
+                className="hover:opacity-90"
+              >
+                Salvar Alterações
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowEditForm(false);
+                  setEditingTask(null);
+                  setNewTask({ title: '', description: '', priority: 'Média', dueDate: '' });
+                }}
+                style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </StandardCard>
+      )}
+
       {/* Filtros e busca */}
       <StandardCard>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -252,9 +389,38 @@ export default function Tarefas() {
                 </div>
               </div>
               
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                {/* Botão para mudar status */}
+                <select
+                  value={task.status}
+                  onChange={(e) => handleStatusChange(task.id, e.target.value as 'Pendente' | 'Em Progresso' | 'Concluída')}
+                  className="bg-gray-800 border-gray-700 text-white rounded px-2 py-1 text-sm"
+                >
+                  <option value="Pendente">Pendente</option>
+                  <option value="Em Progresso">Em Progresso</option>
+                  <option value="Concluída">Concluída</option>
+                </select>
+                
+                {/* Botão de editar */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                  onClick={() => handleEditTask(task)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                
+                {/* Botão de excluir */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                  onClick={() => handleDeleteTask(task.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </StandardCard>
         ))}

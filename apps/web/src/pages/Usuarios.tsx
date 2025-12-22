@@ -3,28 +3,48 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import StandardCard from '../components/ui/StandardCard';
-import { Search, UserPlus, MoreHorizontal, Mail, Calendar, User } from 'lucide-react';
+import { Search, UserPlus, MoreHorizontal, Mail, Calendar, User, Edit, Save, X, Trash2 } from 'lucide-react';
 import { authApi } from '../services/api';
+import { useAuthStore } from '../stores/auth';
 
 interface User {
   id: string;
   username: string;
   email: string;
-  role: 'Admin' | 'User' | 'Viewer';
-  status: 'Ativo' | 'Inativo' | 'Suspenso';
+  role: 'admin' | 'user' | 'viewer';
+  isActive: boolean;
   createdAt: string;
   lastLogin?: string;
   tasksCount: number;
 }
 
 export default function Usuarios() {
+  const { user: currentUser } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editData, setEditData] = useState<{ role: string; isActive: boolean }>({ role: 'user', isActive: true });
+  
+  // Check if current user is admin by looking at role
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   useEffect(() => {
     loadUsers();
+    loadCurrentUserData();
   }, []);
+
+  const loadCurrentUserData = async () => {
+    try {
+      const usersData = await authApi.getUsers();
+      const currentUserInfo = usersData.find(u => u.username === currentUser?.username || u.email === currentUser?.email);
+      setCurrentUserData(currentUserInfo);
+      setIsCurrentUserAdmin(currentUserInfo?.role === 'admin');
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário atual:', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -36,8 +56,8 @@ export default function Usuarios() {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: 'Admin' as const, // For now, all users are admin
-        status: 'Ativo' as const,
+        role: user.role || 'user',
+        isActive: user.isActive !== false,
         createdAt: user.createdAt,
         lastLogin: user.updatedAt,
         tasksCount: 0 // Would need to be calculated from tasks
@@ -50,20 +70,51 @@ export default function Usuarios() {
     }
   };
 
-  const getStatusColor = (status: User['status']) => {
-    const colors = {
-      'Ativo': '#10b981',
-      'Inativo': '#6b7280',
-      'Suspenso': '#ef4444'
-    };
-    return colors[status];
+  const handleEditUser = (user: User) => {
+    setEditingUser(user.id);
+    setEditData({ 
+      role: user.role, 
+      isActive: user.isActive 
+    });
+  };
+
+  const handleSaveUser = async (userId: string) => {
+    try {
+      await authApi.updateUser(userId, editData);
+      await loadUsers(); // Reload users to get updated data
+      setEditingUser(null);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setEditData({ role: 'user', isActive: true });
+  };
+
+  const handleDeleteUser = async (userId: string, username: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o usuário "${username}"? Esta ação não pode ser desfeita.`)) {
+      try {
+        await authApi.deleteUser(userId);
+        await loadUsers(); // Reload users list
+        console.log('Usuário excluído com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+        alert('Erro ao excluir usuário. Tente novamente.');
+      }
+    }
+  };
+
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? '#10b981' : '#6b7280';
   };
 
   const getRoleColor = (role: User['role']) => {
     const colors = {
-      'Admin': '#7fe41a',
-      'User': '#3b82f6',
-      'Viewer': '#8b5cf6'
+      'admin': '#7fe41a',
+      'user': '#3b82f6',
+      'viewer': '#8b5cf6'
     };
     return colors[role];
   };
@@ -191,18 +242,46 @@ export default function Usuarios() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-white font-semibold text-lg">{user.username}</h3>
-                    <Badge 
-                      variant="secondary"
-                      style={{ backgroundColor: `${getRoleColor(user.role)}20`, color: getRoleColor(user.role) }}
-                    >
-                      {user.role}
-                    </Badge>
-                    <Badge 
-                      variant="secondary"
-                      style={{ backgroundColor: `${getStatusColor(user.status)}20`, color: getStatusColor(user.status) }}
-                    >
-                      {user.status}
-                    </Badge>
+                    
+                    {editingUser === user.id && isCurrentUserAdmin ? (
+                      // Edit mode
+                      <>
+                        <select
+                          value={editData.role}
+                          onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+                          className="bg-gray-800 border-gray-700 text-white rounded px-2 py-1 text-sm"
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="user">User</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                        
+                        <select
+                          value={editData.isActive ? 'active' : 'inactive'}
+                          onChange={(e) => setEditData({ ...editData, isActive: e.target.value === 'active' })}
+                          className="bg-gray-800 border-gray-700 text-white rounded px-2 py-1 text-sm"
+                        >
+                          <option value="active">Ativo</option>
+                          <option value="inactive">Inativo</option>
+                        </select>
+                      </>
+                    ) : (
+                      // View mode
+                      <>
+                        <Badge 
+                          variant="secondary"
+                          style={{ backgroundColor: `${getRoleColor(user.role)}20`, color: getRoleColor(user.role) }}
+                        >
+                          {user.role}
+                        </Badge>
+                        <Badge 
+                          variant="secondary"
+                          style={{ backgroundColor: `${getStatusColor(user.isActive)}20`, color: getStatusColor(user.isActive) }}
+                        >
+                          {user.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </>
+                    )}
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-400 mb-2">
@@ -225,9 +304,46 @@ export default function Usuarios() {
                 </div>
               </div>
               
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              {/* Botões de ação para admin */}
+              <div className="flex items-center space-x-2">
+                {isCurrentUserAdmin && (
+                  editingUser === user.id ? (
+                    // Botões de salvar/cancelar
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                        onClick={() => handleSaveUser(user.id)}
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-gray-400 hover:text-gray-300 hover:bg-gray-400/10"
+                        onClick={handleCancelEdit}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    // Botão de editar
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                      onClick={() => handleEditUser(user)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  )
+                )}
+                
+                {!isCurrentUserAdmin && (
+                  <span className="text-xs text-gray-500">Sem permissão</span>
+                )}
+              </div>
             </div>
           </StandardCard>
         ))}
