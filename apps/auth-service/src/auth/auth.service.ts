@@ -137,6 +137,12 @@ export class AuthService {
     return this.userRepository.findOne({ where: { id } });
   }
 
+  async findAllUsers(): Promise<User[]> {
+    return this.userRepository.find({
+      select: ['id', 'username', 'email', 'createdAt', 'updatedAt']
+    });
+  }
+
   private async generateTokens(user: User): Promise<AuthTokens> {
     const payload = { sub: user.id, email: user.email, username: user.username };
 

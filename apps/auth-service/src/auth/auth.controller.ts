@@ -63,6 +63,15 @@ export class AuthController {
     return sanitized;
   }
 
+  @Get('users')
+  async getUsers(@Req() req: Request) {
+    const users = await this.authService.findAllUsers();
+    return users.map(user => {
+      const { password, refreshToken, ...sanitized } = user;
+      return sanitized;
+    });
+  }
+
   // Microservice patterns
   @MessagePattern('auth.validate')
   async validateToken(data: { token: string }) {

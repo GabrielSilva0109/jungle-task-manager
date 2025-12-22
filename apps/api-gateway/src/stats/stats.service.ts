@@ -1,106 +1,87 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 
 @Injectable()
 export class StatsService {
+  private readonly tasksServiceUrl = process.env.TASKS_SERVICE_URL || 'http://tasks-service:3003';
+  private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3002';
   async getDashboardStats(userId: string) {
-    // Temporarily return mock data until we resolve the inter-service communication
-    // This ensures the frontend works while we debug the network issues
-    return {
-      totalTasks: 12,
-      activeTasks: 8,
-      completedTasks: 4,
-      todoTasks: 5,
-      inProgressTasks: 3,
-      recentTasks: [
-        {
-          id: 'mock-task-1',
-          title: 'Implementar autenticação JWT',
-          description: 'Configurar sistema de autenticação com tokens JWT',
-          status: 'IN_PROGRESS',
-          priority: 'HIGH',
-          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
-        },
-        {
-          id: 'mock-task-2',
-          title: 'Criar dashboard de estatísticas',
-          description: 'Desenvolver interface para visualização de métricas',
-          status: 'TODO',
-          priority: 'MEDIUM',
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
-        },
-        {
-          id: 'mock-task-3',
-          title: 'Setup do ambiente Docker',
-          description: 'Configurar containers para desenvolvimento',
-          status: 'DONE',
-          priority: 'HIGH',
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
-        },
-        {
-          id: 'mock-task-4',
-          title: 'Implementar CRUD de tarefas',
-          description: 'Criar endpoints para gerenciar tarefas',
-          status: 'IN_PROGRESS',
-          priority: 'HIGH',
-          createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() // 4 days ago
-        },
-        {
-          id: 'mock-task-5',
-          title: 'Configurar banco de dados',
-          description: 'Setup PostgreSQL e migrações',
-          status: 'DONE',
-          priority: 'HIGH',
-          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() // 5 days ago
-        }
-      ],
-      recentActivity: [
-        {
-          id: 'activity-1',
-          type: 'task_created',
-          description: 'Tarefa "Implementar autenticação JWT" foi criada',
-          createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-          user: 'Admin'
-        },
-        {
-          id: 'activity-2',
-          type: 'task_completed',
-          description: 'Tarefa "Setup do ambiente Docker" foi concluída',
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'activity-3',
-          type: 'task_updated',
-          description: 'Tarefa "Implementar CRUD de tarefas" teve prioridade alterada',
-          createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'activity-4',
-          type: 'task_assigned',
-          description: 'Tarefa "Criar dashboard de estatísticas" foi atribuída',
-          createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'activity-5',
-          type: 'task_created',
-          description: 'Tarefa "Configurar banco de dados" foi criada',
-          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-          user: 'Admin'
-        }
-      ],
-      lastSync: new Date().toISOString()
-    };
+    try {
+      // Fetch all tasks to calculate statistics
+      const allTasksResponse = await axios.get(`${this.tasksServiceUrl}/tasks`, {
+        params: { page: 1, size: 1000 } // Get all tasks
+      });
+      
+      const tasks = allTasksResponse.data.data;
+      const totalTasks = allTasksResponse.data.meta.total;
+      
+      // Calculate task statistics
+      const todoTasks = tasks.filter(task => task.status === 'TODO').length;
+      const inProgressTasks = tasks.filter(task => task.status === 'IN_PROGRESS').length;
+      const completedTasks = tasks.filter(task => task.status === 'DONE').length;
+      const activeTasks = todoTasks + inProgressTasks;
+      
+      // Get recent tasks (last 5)
+      const recentTasks = tasks
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+      
+      return {
+        totalTasks,
+        activeTasks,
+        completedTasks,
+        todoTasks,
+        inProgressTasks,
+        recentTasks,
+        lastSync: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      // Return fallback data
+      return {
+        totalTasks: 0,
+        activeTasks: 0,
+        completedTasks: 0,
+        todoTasks: 0,
+        inProgressTasks: 0,
+        recentTasks: [],
+        lastSync: new Date().toISOString()
+      };
+    }
   }
 
   async getUserStats(userId: string) {
-    // Return mock user statistics
-    return {
-      totalUsers: 3,
-      activeUsers: 2,
-      adminUsers: 1,
-      newUsersLast7Days: 1,
-    };
+    try {
+      // Fetch user statistics from auth service
+      const usersResponse = await axios.get(`${this.authServiceUrl}/users`);
+      const users = usersResponse.data;
+      
+      // Calculate user statistics
+      const totalUsers = users.length;
+      const activeUsers = users.filter(user => user.isActive !== false).length;
+      const adminUsers = users.filter(user => user.role === 'admin' || user.isAdmin).length;
+      
+      // Calculate new users in last 7 days
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const newUsersLast7Days = users.filter(user => 
+        new Date(user.createdAt) > sevenDaysAgo
+      ).length;
+      
+      return {
+        totalUsers,
+        activeUsers,
+        adminUsers,
+        newUsersLast7Days,
+      };
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      // Return fallback data
+      return {
+        totalUsers: 1,
+        activeUsers: 1,
+        adminUsers: 1,
+        newUsersLast7Days: 0,
+      };
+    }
   }
 }
