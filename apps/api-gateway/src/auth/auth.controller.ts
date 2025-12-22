@@ -6,6 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Get,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -80,5 +81,16 @@ export class AuthController {
   async logout(@Req() req: Request): Promise<void> {
     const user = req.user as any;
     return this.authService.logout(user.userId);
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'List of users' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUsers(@Req() req: Request) {
+    const user = req.user as any;
+    return this.authService.getUsers(user.userId);
   }
 }

@@ -71,4 +71,17 @@ export class AuthService {
       return null;
     }
   }
+
+  async getUsers(requestingUserId: string): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.authServiceUrl}/users`, {
+        headers: {
+          'x-user-id': requestingUserId
+        }
+      });
+      return response.data;
+    } catch (error) {
+      return [];
+    }
+  }
 }

@@ -11,6 +11,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WebsocketModule } from './websocket/websocket.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { WebsocketModule } from './websocket/websocket.module';
     CommentsModule,
     NotificationsModule,
     WebsocketModule,
+    StatsModule,
   ],
   providers: [
     {
