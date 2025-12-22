@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import StandardCard from '../components/ui/StandardCard';
 import { Search, UserPlus, MoreHorizontal, Mail, Calendar, User } from 'lucide-react';
+import { authApi } from '../services/api';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   role: 'Admin' | 'User' | 'Viewer';
@@ -18,60 +19,36 @@ interface User {
 
 export default function Usuarios() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data dos usuários
-  const [users] = useState<User[]>([
-    {
-      id: 1,
-      username: 'admin',
-      email: 'admin@jungle.com',
-      role: 'Admin',
-      status: 'Ativo',
-      createdAt: '2024-01-10',
-      lastLogin: '2024-01-15',
-      tasksCount: 12
-    },
-    {
-      id: 2,
-      username: 'joao.silva',
-      email: 'joao.silva@email.com',
-      role: 'User',
-      status: 'Ativo',
-      createdAt: '2024-01-12',
-      lastLogin: '2024-01-14',
-      tasksCount: 8
-    },
-    {
-      id: 3,
-      username: 'maria.costa',
-      email: 'maria.costa@email.com',
-      role: 'User',
-      status: 'Ativo',
-      createdAt: '2024-01-13',
-      lastLogin: '2024-01-15',
-      tasksCount: 5
-    },
-    {
-      id: 4,
-      username: 'pedro.santos',
-      email: 'pedro.santos@email.com',
-      role: 'Viewer',
-      status: 'Inativo',
-      createdAt: '2024-01-11',
-      lastLogin: '2024-01-12',
-      tasksCount: 2
-    },
-    {
-      id: 5,
-      username: 'ana.oliveira',
-      email: 'ana.oliveira@email.com',
-      role: 'User',
-      status: 'Suspenso',
-      createdAt: '2024-01-09',
-      lastLogin: '2024-01-13',
-      tasksCount: 0
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const usersData = await authApi.getUsers();
+      
+      // Convert backend data to frontend format
+      setUsers(usersData.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: 'Admin' as const, // For now, all users are admin
+        status: 'Ativo' as const,
+        createdAt: user.createdAt,
+        lastLogin: user.updatedAt,
+        tasksCount: 0 // Would need to be calculated from tasks
+      })));
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const getStatusColor = (status: User['status']) => {
     const colors = {
@@ -122,6 +99,17 @@ export default function Usuarios() {
       description: 'Usuários criados na última semana'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Usuários</h1>
+          <p className="text-gray-400">Carregando informações dos usuários...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">

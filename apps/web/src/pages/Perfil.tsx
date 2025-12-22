@@ -199,7 +199,7 @@ export default function Perfil() {
                 
                 <div>
                   <label className="text-white text-sm font-medium mb-2 block">Cargo</label>
-                  <Input
+                  <Input 
                     value={editData.position}
                     onChange={(e) => setEditData({ ...editData, position: e.target.value })}
                     placeholder="Seu cargo na empresa"

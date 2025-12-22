@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
 import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { tasksApi } from '../services/api';
 
 interface Task {
-  id: number;
+  id: string;
   title: string;
   description: string;
   status: 'Pendente' | 'Em Progresso' | 'Concluída' | 'Cancelada';
@@ -20,6 +21,8 @@ interface Task {
 export default function Tarefas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<{
     title: string;
     description: string;
@@ -32,47 +35,34 @@ export default function Tarefas() {
     dueDate: ''
   });
 
-  // Mock data das tarefas
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: 'Implementar autenticação',
-      description: 'Criar sistema de login e registro de usuários',
-      status: 'Em Progresso',
-      priority: 'Alta',
-      assignedTo: 'Admin',
-      createdAt: '2024-01-15',
-      dueDate: '2024-01-20'
-    },
-    {
-      id: 2,
-      title: 'Corrigir bug do dashboard',
-      description: 'Resolver problema de infinite loop nas notificações',
-      status: 'Concluída',
-      priority: 'Alta',
-      assignedTo: 'Admin',
-      createdAt: '2024-01-14'
-    },
-    {
-      id: 3,
-      title: 'Revisar código do frontend',
-      description: 'Análise de código e otimizações',
-      status: 'Pendente',
-      priority: 'Média',
-      assignedTo: 'Admin',
-      createdAt: '2024-01-13',
-      dueDate: '2024-01-25'
-    },
-    {
-      id: 4,
-      title: 'Documentar API',
-      description: 'Criar documentação completa da API REST',
-      status: 'Pendente',
-      priority: 'Baixa',
-      assignedTo: 'Admin',
-      createdAt: '2024-01-12'
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await tasksApi.getTasks({ page: 1, size: 100 });
+      setTasks(response.data.map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status === 'TODO' ? 'Pendente' as const :
+                task.status === 'IN_PROGRESS' ? 'Em Progresso' as const :
+                task.status === 'DONE' ? 'Concluída' as const : 'Cancelada' as const,
+        priority: task.priority === 'LOW' ? 'Baixa' as const :
+                 task.priority === 'MEDIUM' ? 'Média' as const : 'Alta' as const,
+        assignedTo: 'Admin',
+        createdAt: task.createdAt,
+        dueDate: task.dueDate
+      })));
+    } catch (error) {
+      console.error('Erro ao carregar tarefas:', error);
+      setTasks([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const getStatusColor = (status: Task['status']) => {
     const colors = {
@@ -98,22 +88,24 @@ export default function Tarefas() {
     task.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (newTask.title.trim()) {
-      const task: Task = {
-        id: tasks.length + 1,
-        title: newTask.title,
-        description: newTask.description,
-        status: 'Pendente',
-        priority: newTask.priority,
-        assignedTo: 'Admin',
-        createdAt: new Date().toISOString().split('T')[0],
-        dueDate: newTask.dueDate || undefined
-      };
-      
-      setTasks([task, ...tasks]);
-      setNewTask({ title: '', description: '', priority: 'Média', dueDate: '' });
-      setShowCreateForm(false);
+      try {
+        const taskData = {
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority === 'Baixa' ? 'LOW' as const :
+                   newTask.priority === 'Média' ? 'MEDIUM' as const : 'HIGH' as const,
+          deadline: newTask.dueDate || '2024-12-31T23:59:59.000Z'
+        };
+        
+        await tasksApi.createTask(taskData);
+        await loadTasks(); // Recarregar tarefas
+        setNewTask({ title: '', description: '', priority: 'Média', dueDate: '' });
+        setShowCreateForm(false);
+      } catch (error) {
+        console.error('Erro ao criar tarefa:', error);
+      }
     }
   };
 
