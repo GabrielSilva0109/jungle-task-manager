@@ -193,8 +193,16 @@ export class AuthService {
     }
 
     // Prevent self-deletion (basic protection)
-    if (requestingUserId === id) {
+    if (requestingUserId && requestingUserId === id) {
       throw new BadRequestException('Cannot delete your own account');
+    }
+
+    // Prevent deleting the last admin
+    if (user.role === 'admin') {
+      const adminCount = await this.userRepository.count({ where: { role: 'admin' } });
+      if (adminCount <= 1) {
+        throw new BadRequestException('Cannot delete the last admin user');
+      }
     }
 
     await this.userRepository.delete(id);
