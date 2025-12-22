@@ -328,15 +328,29 @@ export default function Usuarios() {
                       </Button>
                     </>
                   ) : (
-                    // Botão de editar
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    // Botões de editar e excluir
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      
+                      {/* Prevent deleting own account and prevent deleting last admin */}
+                      {currentUserData?.id !== user.id && (user.role !== 'admin' || users.filter(u => u.role === 'admin').length > 1) && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                          onClick={() => handleDeleteUser(user.id, user.username)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </>
                   )
                 )}
                 
