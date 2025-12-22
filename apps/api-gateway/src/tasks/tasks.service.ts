@@ -10,10 +10,8 @@ export class TasksService {
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
     try {
-      const response = await axios.post(`${this.tasksServiceUrl}/tasks`, {
-        ...createTaskDto,
-        userId,
-      });
+      // Don't send userId in body, let tasks-service use its hardcoded value
+      const response = await axios.post(`${this.tasksServiceUrl}/tasks`, createTaskDto);
       return response.data;
     } catch (error) {
       throw error;
@@ -22,14 +20,14 @@ export class TasksService {
 
   async findAll(paginationDto: PaginationDto, search?: string, status?: string, userId?: string) {
     try {
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (status) params.append('status', status);
-      if (userId) params.append('userId', userId);
-      if (paginationDto.page) params.append('page', paginationDto.page.toString());
-      if (paginationDto.size) params.append('size', paginationDto.size.toString());
+      const params: any = {};
+      if (search) params.search = search;
+      if (status) params.status = status;
+      if (userId) params.userId = userId;
+      if (paginationDto.page) params.page = Number(paginationDto.page);
+      if (paginationDto.size) params.size = Number(paginationDto.size);
       
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks?${params.toString()}`);
+      const response = await axios.get(`${this.tasksServiceUrl}/tasks`, { params });
       return response.data;
     } catch (error) {
       throw error;

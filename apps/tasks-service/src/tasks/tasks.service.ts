@@ -2,11 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Like } from 'typeorm';
-import { ClientProxy } from '@nestjs/microservices';
+import axios from 'axios';
 
 import { Task } from '../entities/task.entity';
 import { TaskAssignment } from '../entities/task-assignment.entity';
@@ -26,8 +25,6 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     @InjectRepository(TaskAssignment)
     private assignmentRepository: Repository<TaskAssignment>,
-    @Inject('NOTIFICATIONS_SERVICE')
-    private notificationsClient: ClientProxy,
     private auditService: AuditService,
   ) {}
 
@@ -55,12 +52,19 @@ export class TasksService {
       userId,
     });
 
-    // Publish event
-    this.notificationsClient.emit('task.created', {
-      taskId: savedTask.id,
-      userId,
-      assignedUserIds: assignedUserIds || [],
-    });
+    // Send notification via HTTP
+    try {
+      await axios.post('http://notifications-service:3004/api/notifications', {
+        type: 'task.created',
+        data: {
+          taskId: savedTask.id,
+          userId,
+          assignedUserIds: assignedUserIds || [],
+        },
+      });
+    } catch (error: any) {
+      console.warn('Failed to send task creation notification:', error.message || error);
+    }
 
     return this.findOne(savedTask.id);
   }
@@ -159,13 +163,20 @@ export class TasksService {
       userId,
     });
 
-    // Publish event
-    this.notificationsClient.emit('task.updated', {
-      taskId: id,
-      userId,
-      changes: updateTaskDto,
-      assignedUserIds: assignedUserIds || [],
-    });
+    // Send notification via HTTP
+    try {
+      await axios.post('http://notifications-service:3004/api/notifications', {
+        type: 'task.updated',
+        data: {
+          taskId: id,
+          userId,
+          changes: updateTaskDto,
+          assignedUserIds: assignedUserIds || [],
+        },
+      });
+    } catch (error: any) {
+      console.warn('Failed to send task update notification:', error.message || error);
+    }
 
     return this.findOne(id);
   }

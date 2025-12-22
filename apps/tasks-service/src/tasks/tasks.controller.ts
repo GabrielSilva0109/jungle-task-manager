@@ -8,8 +8,9 @@ import {
   Delete,
   Query,
   ParseUUIDPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
 
 import { TasksService } from './tasks.service';
 import {
@@ -19,47 +20,53 @@ import {
   TaskStatus,
 } from '@jungle/types';
 
-@Controller()
+@Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
-  // Microservice patterns
-  @MessagePattern('tasks.create')
-  async createTask(data: { createTaskDto: CreateTaskDto; userId: string }) {
-    return this.tasksService.create(data.createTaskDto, data.userId);
+  @Post()
+  async create(@Body() createTaskDto: CreateTaskDto, @Request() req: any) {
+    // For now, we'll use a hardcoded userId. In production, this would come from JWT
+    const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.create(createTaskDto, userId);
   }
 
-  @MessagePattern('tasks.findAll')
-  async findAllTasks(data: {
-    paginationDto: PaginationDto;
-    search?: string;
-    status?: TaskStatus;
-    userId?: string;
-  }) {
-    return this.tasksService.findAll(
-      data.paginationDto,
-      data.search,
-      data.status,
-      data.userId,
-    );
+  @Get()
+  async findAll(
+    @Query('page') page?: string,
+    @Query('size') size?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: TaskStatus,
+    @Query('userId') userId?: string,
+  ) {
+    const paginationDto = {
+      page: page ? parseInt(page, 10) : 1,
+      size: size ? parseInt(size, 10) : 10,
+    };
+    
+    return this.tasksService.findAll(paginationDto, search, status, userId);
   }
 
-  @MessagePattern('tasks.findOne')
-  async findOneTask(data: { id: string }) {
-    return this.tasksService.findOne(data.id);
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tasksService.findOne(id);
   }
 
-  @MessagePattern('tasks.update')
-  async updateTask(data: {
-    id: string;
-    updateTaskDto: UpdateTaskDto;
-    userId: string;
-  }) {
-    return this.tasksService.update(data.id, data.updateTaskDto, data.userId);
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @Request() req: any,
+  ) {
+    // For now, we'll use a hardcoded userId. In production, this would come from JWT
+    const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.update(id, updateTaskDto, userId);
   }
 
-  @MessagePattern('tasks.remove')
-  async removeTask(data: { id: string; userId: string }) {
-    return this.tasksService.remove(data.id, data.userId);
+  @Delete(':id')
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    // For now, we'll use a hardcoded userId. In production, this would come from JWT
+    const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.remove(id, userId);
   }
 }

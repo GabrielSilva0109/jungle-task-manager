@@ -1,4 +1,5 @@
 import { IsEmail, IsString, MinLength, IsEnum, IsOptional, IsUUID, IsInt, Min, IsArray, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 // Auth Types
 export interface AuthUser {
@@ -162,11 +163,13 @@ export class CreateCommentDto {
 }
 
 export class PaginationDto {
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @IsOptional()
   page?: number = 1;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @IsOptional()

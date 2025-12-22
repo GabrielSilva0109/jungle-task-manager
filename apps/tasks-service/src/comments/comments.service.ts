@@ -1,11 +1,10 @@
 import {
   Injectable,
   NotFoundException,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClientProxy } from '@nestjs/microservices';
+import axios from 'axios';
 
 import { Comment } from '../entities/comment.entity';
 import { Task } from '../entities/task.entity';
@@ -22,8 +21,6 @@ export class CommentsService {
     private commentRepository: Repository<Comment>,
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
-    @Inject('NOTIFICATIONS_SERVICE')
-    private notificationsClient: ClientProxy,
   ) {}
 
   async create(
@@ -45,12 +42,19 @@ export class CommentsService {
 
     const savedComment = await this.commentRepository.save(comment);
 
-    // Publish event
-    this.notificationsClient.emit('comment.created', {
-      taskId,
-      commentId: savedComment.id,
-      authorId: userId,
-    });
+    // Send notification via HTTP
+    try {
+      await axios.post('http://notifications-service:3004/api/notifications', {
+        type: 'comment.created',
+        data: {
+          taskId,
+          commentId: savedComment.id,
+          authorId: userId,
+        },
+      });
+    } catch (error: any) {
+      console.warn('Failed to send notification:', error.message || error);
+    }
 
     return savedComment;
   }
