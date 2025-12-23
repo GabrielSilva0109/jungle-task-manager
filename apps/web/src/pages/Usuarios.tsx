@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import StandardCard from '../components/ui/StandardCard';
 import { Search, UserPlus, MoreHorizontal, Mail, Calendar, User, Edit, Save, X, Trash2 } from 'lucide-react';
-import { authApi } from '../services/api';
+import { authApi, tasksApi } from '../services/api';
 import { useAuthStore } from '../stores/auth';
 
 interface User {
@@ -25,6 +25,10 @@ export default function Usuarios() {
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editData, setEditData] = useState<{ role: string; isActive: boolean }>({ role: 'user', isActive: true });
+  
+  // Filtros
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user' | 'viewer'>('all');
   
   // Check if current user is admin by looking at role
   const [currentUserData, setCurrentUserData] = useState<any>(null);
@@ -51,17 +55,61 @@ export default function Usuarios() {
       setLoading(true);
       const usersData = await authApi.getUsers();
       
-      // Convert backend data to frontend format
-      setUsers(usersData.map(user => ({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role || 'user',
-        isActive: user.isActive !== false,
-        createdAt: user.createdAt,
-        lastLogin: user.updatedAt,
-        tasksCount: 0 // Would need to be calculated from tasks
-      })));
+      // Get tasks count for each user
+      const usersWithTasksCount = await Promise.all(
+        usersData.map(async (user) => {
+          try {
+            // Get tasks for this specific user by making a request with their user ID
+            const tasksResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/tasks`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')!).state.tokens?.accessToken : ''}`,
+                'x-user-id': user.id
+              }
+            });
+            
+            if (tasksResponse.ok) {
+              const tasksData = await tasksResponse.json();
+              const taskCount = tasksData.meta?.total || 0;
+              return {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role || 'user',
+                isActive: user.isActive !== false,
+                createdAt: user.createdAt,
+                lastLogin: user.updatedAt,
+                tasksCount: taskCount
+              };
+            } else {
+              // Fallback if request fails
+              return {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role || 'user',
+                isActive: user.isActive !== false,
+                createdAt: user.createdAt,
+                lastLogin: user.updatedAt,
+                tasksCount: 0
+              };
+            }
+          } catch (error) {
+            console.error(`Erro ao buscar tarefas para usuário ${user.username}:`, error);
+            return {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role || 'user',
+              isActive: user.isActive !== false,
+              createdAt: user.createdAt,
+              lastLogin: user.updatedAt,
+              tasksCount: 0
+            };
+          }
+        })
+      );
+      
+      setUsers(usersWithTasksCount);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
       setUsers([]);
@@ -119,10 +167,21 @@ export default function Usuarios() {
     return colors[role];
   };
 
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    // Filtro de busca por nome ou email
+    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro de status
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && user.isActive) ||
+      (statusFilter === 'inactive' && !user.isActive);
+    
+    // Filtro de role
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    
+    return matchesSearch && matchesStatus && matchesRole;
+  });
 
   const statsCards = [
     {
@@ -132,12 +191,12 @@ export default function Usuarios() {
     },
     {
       title: 'Usuários Ativos',
-      value: users.filter(u => u.status === 'Ativo').length,
+      value: users.filter(u => u.isActive === true).length,
       description: 'Usuários ativos no sistema'
     },
     {
       title: 'Administradores',
-      value: users.filter(u => u.role === 'Admin').length,
+      value: users.filter(u => u.role === 'admin').length,
       description: 'Usuários com privilégios de admin'
     },
     {
@@ -207,18 +266,25 @@ export default function Usuarios() {
           </div>
           
           <div className="flex space-x-2">
-            <select className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm">
-              <option value="">Todos os Status</option>
-              <option value="Ativo">Ativo</option>
-              <option value="Inativo">Inativo</option>
-              <option value="Suspenso">Suspenso</option>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
             </select>
             
-            <select className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm">
-              <option value="">Todas as Funções</option>
-              <option value="Admin">Admin</option>
-              <option value="User">User</option>
-              <option value="Viewer">Viewer</option>
+            <select 
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as 'all' | 'admin' | 'user' | 'viewer')}
+              className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
+            >
+              <option value="all">Todas as Funções</option>
+              <option value="admin">Admin</option>
+              <option value="user">User</option>
+              <option value="viewer">Viewer</option>
             </select>
           </div>
         </div>

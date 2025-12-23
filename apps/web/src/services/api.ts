@@ -23,8 +23,6 @@ const api = axios.create({
 
 // Request interceptor to add auth token and user ID
 api.interceptors.request.use((config) => {
-  console.log('🔗 API Request:', config.method?.toUpperCase(), config.url);
-  
   // Get token from auth storage
   const authData = localStorage.getItem('auth-storage');
   if (authData) {
@@ -34,7 +32,6 @@ api.interceptors.request.use((config) => {
       // Add auth token if available
       if (state.tokens?.accessToken) {
         config.headers.Authorization = `Bearer ${state.tokens.accessToken}`;
-        console.log('🔑 Auth token added successfully');
       } else {
         console.log('❌ No access token found in auth storage');
       }
@@ -42,7 +39,6 @@ api.interceptors.request.use((config) => {
       // Add user ID if available
       if (state.user?.id) {
         config.headers['x-user-id'] = state.user.id;
-        console.log('👤 User ID added to headers:', state.user.id);
       } else {
         console.log('❌ No user ID found in auth state');
       }
@@ -52,8 +48,6 @@ api.interceptors.request.use((config) => {
   } else {
     console.log('❌ No auth data found in localStorage');
   }
-  
-  console.log('📡 Request headers x-user-id:', config.headers['x-user-id']);
   return config;
 });
 
@@ -150,6 +144,8 @@ export const statsApi = {
     api.get('/stats/dashboard').then(res => res.data),
   getUserStats: (): Promise<any> =>
     api.get('/stats/users').then(res => res.data),
+  getUsersRanking: (): Promise<any> =>
+    api.get('/stats/users-ranking').then(res => res.data),
 };
 
 export default api;

@@ -40,4 +40,14 @@ export class StatsController {
     const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
     return this.statsService.getUserStats(currentUserId);
   }
+
+  @Get('users-ranking')
+  @ApiOperation({ summary: 'Get users ranking by completed tasks' })
+  async getUsersRanking(
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request
+  ) {
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.statsService.getUsersRanking(currentUserId);
+  }
 }

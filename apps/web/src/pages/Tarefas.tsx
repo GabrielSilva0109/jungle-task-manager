@@ -60,6 +60,7 @@ export default function Tarefas() {
     description: '',
     priority: 'Média',
     dueDate: ''
+    
   });
 
   useEffect(() => {

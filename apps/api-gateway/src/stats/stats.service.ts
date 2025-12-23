@@ -12,7 +12,9 @@ export class StatsService {
         params: { 
           page: 1, 
           size: 1000, // Get all tasks
-          userId: userId // Filter by user
+        },
+        headers: {
+          'x-user-id': userId // Pass user ID in header
         }
       });
       
@@ -86,6 +88,62 @@ export class StatsService {
         adminUsers: 1,
         newUsersLast7Days: 0,
       };
+    }
+  }
+
+  async getUsersRanking(userId: string) {
+    try {
+      // Get all users from auth service
+      const usersResponse = await axios.get(`${this.authServiceUrl}/users`);
+      const users = usersResponse.data;
+
+      // Get completed tasks count for each user
+      const userRankings = await Promise.all(
+        users.map(async (user) => {
+          try {
+            const tasksResponse = await axios.get(`${this.tasksServiceUrl}/tasks`, {
+              params: { 
+                page: 1, 
+                size: 1000,
+                status: 'DONE' // Only completed tasks
+              },
+              headers: {
+                'x-user-id': user.id // Get tasks for this specific user
+              }
+            });
+            
+            const completedTasksCount = tasksResponse.data.meta?.total || 0;
+            
+            return {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              completedTasks: completedTasksCount,
+              isActive: user.isActive
+            };
+          } catch (error) {
+            console.error(`Error fetching tasks for user ${user.username}:`, error);
+            return {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              completedTasks: 0,
+              isActive: user.isActive
+            };
+          }
+        })
+      );
+
+      // Filter active users and sort by completed tasks
+      const ranking = userRankings
+        .filter(user => user.isActive && user.completedTasks > 0)
+        .sort((a, b) => b.completedTasks - a.completedTasks)
+        .slice(0, 5); // Top 5 users
+
+      return ranking;
+    } catch (error) {
+      console.error('Error fetching users ranking:', error);
+      return [];
     }
   }
 }

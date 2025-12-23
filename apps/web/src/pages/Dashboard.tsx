@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from '@tanstack/react-router';
 import { useAuthStore } from '../stores/auth';
 import { Button } from '../components/ui/button';
+import NavButton from '../components/ui/NavButton';
 import { NotificationSystem, useNotifications } from '../components/NotificationSystem';
 import StatusIndicator from '../components/StatusIndicator';
 import Home from './Home';
@@ -66,47 +67,31 @@ export default function Dashboard() {
             </div>
 
             {/* Navigation Menu */}
-            <nav className="hidden md:flex space-x-8">
-              <Button 
-                variant="ghost" 
-                className="font-medium transition-colors duration-200"
-                style={{ color: currentPage === 'home' ? '#7fe41a' : '#ffffff' }}
+            <nav className="hidden md:flex space-x-2">
+              <NavButton
+                isActive={currentPage === 'home'}
                 onClick={() => setCurrentPage('home')}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#7fe41a'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = currentPage === 'home' ? '#7fe41a' : '#ffffff'}
               >
                 Home
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="font-medium transition-colors duration-200"
-                style={{ color: currentPage === 'tarefas' ? '#7fe41a' : '#ffffff' }}
+              </NavButton>
+              <NavButton
+                isActive={currentPage === 'tarefas'}
                 onClick={() => setCurrentPage('tarefas')}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#7fe41a'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = currentPage === 'tarefas' ? '#7fe41a' : '#ffffff'}
               >
                 Tarefas
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="font-medium transition-colors duration-200"
-                style={{ color: currentPage === 'usuarios' ? '#7fe41a' : '#ffffff' }}
+              </NavButton>
+              <NavButton
+                isActive={currentPage === 'usuarios'}
                 onClick={() => setCurrentPage('usuarios')}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#7fe41a'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = currentPage === 'usuarios' ? '#7fe41a' : '#ffffff'}
               >
                 Usuários
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="font-medium transition-colors duration-200"
-                style={{ color: currentPage === 'perfil' ? '#7fe41a' : '#ffffff' }}
+              </NavButton>
+              <NavButton
+                isActive={currentPage === 'perfil'}
                 onClick={() => setCurrentPage('perfil')}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#7fe41a'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = currentPage === 'perfil' ? '#7fe41a' : '#ffffff'}
               >
                 Perfil
-              </Button>
+              </NavButton>
             </nav>
 
             {/* Right side - User info and logout */}
