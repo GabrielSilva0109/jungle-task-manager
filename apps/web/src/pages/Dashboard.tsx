@@ -60,10 +60,12 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
-            <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold" style={{ color: '#7fe41a' }}>
-                Jungle
-              </h1>
+            <div className="flex-shrink-0 flex items-center">
+              <img 
+                src="/assets/jungle_logo.svg" 
+                alt="Jungle Logo" 
+                className="w-8 h-8 mr-3"
+              />
             </div>
 
             {/* Navigation Menu */}

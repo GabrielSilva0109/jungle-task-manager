@@ -70,12 +70,17 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Email não encontrado');
+    }
+
+    // Verificar se a conta está ativa
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is inactive. Contact administrator.');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Senha incorreta');
     }
 
     const tokens = await this.generateTokens(user);
@@ -139,7 +144,7 @@ export class AuthService {
 
   async findAllUsers(): Promise<User[]> {
     return this.userRepository.find({
-      select: ['id', 'username', 'email', 'role', 'isActive', 'createdAt', 'updatedAt']
+      select: ['id', 'username', 'email', 'role', 'isActive', 'bio', 'phone', 'company', 'position', 'createdAt', 'updatedAt']
     });
   }
 
@@ -164,7 +169,16 @@ export class AuthService {
   }
   async updateUser(
     id: string,
-    updateData: { role?: string; isActive?: boolean },
+    updateData: { 
+      role?: string; 
+      isActive?: boolean;
+      username?: string;
+      email?: string;
+      bio?: string;
+      phone?: string;
+      company?: string;
+      position?: string;
+    },
     requestingUserId?: string
   ): Promise<any> {
     // For now, allow any user to update (in production, add admin check)
@@ -172,6 +186,25 @@ export class AuthService {
     
     if (!user) {
       throw new BadRequestException('User not found');
+    }
+
+    // Check for email/username conflicts if they're being updated
+    if (updateData.email && updateData.email !== user.email) {
+      const existingEmail = await this.userRepository.findOne({ 
+        where: { email: updateData.email } 
+      });
+      if (existingEmail) {
+        throw new ConflictException('Email already exists');
+      }
+    }
+
+    if (updateData.username && updateData.username !== user.username) {
+      const existingUsername = await this.userRepository.findOne({ 
+        where: { username: updateData.username } 
+      });
+      if (existingUsername) {
+        throw new ConflictException('Username already exists');
+      }
     }
 
     // Update user data

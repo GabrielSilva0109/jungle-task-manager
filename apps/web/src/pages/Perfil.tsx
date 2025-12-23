@@ -5,11 +5,12 @@ import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
 import { useAuthStore } from '../stores/auth';
 import { User, Mail, Calendar, Key, Edit, Save, X, Shield } from 'lucide-react';
-import { tasksApi } from '../services/api';
+import { tasksApi, authApi } from '../services/api';
 
 export default function Perfil() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [profileStats, setProfileStats] = useState({
     tasksCompleted: 0,
     tasksInProgress: 0,
@@ -21,11 +22,25 @@ export default function Perfil() {
   const [editData, setEditData] = useState({
     username: user?.username || '',
     email: user?.email || '',
-    bio: '',
-    phone: '',
-    company: '',
-    position: ''
+    bio: (user as any)?.bio || '',
+    phone: (user as any)?.phone || '',
+    company: (user as any)?.company || '',
+    position: (user as any)?.position || ''
   });
+
+  // Atualizar editData quando user mudar
+  useEffect(() => {
+    if (user) {
+      setEditData({
+        username: user.username || '',
+        email: user.email || '',
+        bio: (user as any)?.bio || '',
+        phone: (user as any)?.phone || '',
+        company: (user as any)?.company || '',
+        position: (user as any)?.position || ''
+      });
+    }
+  }, [user]);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -65,10 +80,60 @@ export default function Perfil() {
     }
   };
 
-  const handleSaveProfile = () => {
-    // Aqui seria feita a chamada para a API para atualizar o perfil
-    console.log('Salvando perfil:', editData);
-    setEditMode(false);
+  const handleSaveProfile = async () => {
+    if (!user?.id) {
+      alert('Erro: usuário não encontrado');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Atualizar perfil via API
+      const updatedUser = await authApi.updateProfile(user.id, {
+        username: editData.username,
+        email: editData.email,
+        bio: editData.bio,
+        phone: editData.phone,
+        company: editData.company,
+        position: editData.position
+      });
+      
+      // Atualizar o usuário no store com TODOS os campos
+      setUser({
+        ...user,
+        username: editData.username,
+        email: editData.email,
+        bio: editData.bio,
+        phone: editData.phone,
+        company: editData.company,
+        position: editData.position
+      } as any);
+      
+      // Atualizar localStorage do auth com todos os campos
+      const authData = localStorage.getItem('auth-storage');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        parsed.state.user = {
+          ...parsed.state.user,
+          username: editData.username,
+          email: editData.email,
+          bio: editData.bio,
+          phone: editData.phone,
+          company: editData.company,
+          position: editData.position
+        };
+        localStorage.setItem('auth-storage', JSON.stringify(parsed));
+      }
+      
+      setEditMode(false);
+      alert('Perfil atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      alert('Erro ao salvar perfil. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = () => {
@@ -86,10 +151,10 @@ export default function Perfil() {
     setEditData({
       username: user?.username || '',
       email: user?.email || '',
-      bio: '',
-      phone: '',
-      company: '',
-      position: ''
+      bio: (user as any)?.bio || '',
+      phone: (user as any)?.phone || '',
+      company: (user as any)?.company || '',
+      position: (user as any)?.position || ''
     });
     setEditMode(false);
   };
@@ -120,15 +185,17 @@ export default function Perfil() {
             <div className="flex space-x-2">
               <Button 
                 onClick={handleSaveProfile}
+                disabled={saving}
                 size="sm"
                 style={{ backgroundColor: '#7fe41a', color: '#000000' }}
                 className="hover:opacity-90"
               >
                 <Save className="w-4 h-4 mr-2" />
-                Salvar
+                {saving ? 'Salvando...' : 'Salvar'}
               </Button>
               <Button 
                 onClick={cancelEdit}
+                disabled={saving}
                 variant="outline" 
                 size="sm"
                 style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}

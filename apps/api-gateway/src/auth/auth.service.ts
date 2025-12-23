@@ -1,6 +1,8 @@
 import {
   Injectable,
   UnauthorizedException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import axios from 'axios';
@@ -24,7 +26,18 @@ export class AuthService {
     try {
       const response = await axios.post(`${this.authServiceUrl}/register`, registerDto);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response) {
+        // Repassar o erro do auth-service com a mensagem específica
+        const status = error.response.status;
+        const message = error.response.data?.message || 'Erro no registro';
+        
+        if (status === 400) {
+          throw new BadRequestException(message);
+        } else if (status === 409) {
+          throw new ConflictException(message);
+        }
+      }
       throw error;
     }
   }
@@ -33,7 +46,16 @@ export class AuthService {
     try {
       const response = await axios.post(`${this.authServiceUrl}/login`, loginDto);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response) {
+        // Repassar o erro do auth-service com a mensagem específica
+        const status = error.response.status;
+        const message = error.response.data?.message || 'Erro de autenticação';
+        
+        if (status === 401) {
+          throw new UnauthorizedException(message);
+        }
+      }
       throw error;
     }
   }

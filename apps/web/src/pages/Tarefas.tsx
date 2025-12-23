@@ -60,7 +60,6 @@ export default function Tarefas() {
     description: '',
     priority: 'Média',
     dueDate: ''
-    
   });
 
   useEffect(() => {
@@ -74,13 +73,11 @@ export default function Tarefas() {
       const authData = localStorage.getItem('auth-storage');
       if (authData) {
         const { state } = JSON.parse(authData);
-        console.log('👤 User from auth:', state.user);
       } else {
         console.log('❌ No auth data found');
       }
       
       const response = await tasksApi.getTasks({ page: 1, size: 100 });
-      console.log('📋 Tasks fetched:', response.data);
       setTasks(response.data.map(task => {
         let status: 'Pendente' | 'Em Progresso' | 'Concluída' | 'Cancelada';
         if (task.status === 'TODO') {

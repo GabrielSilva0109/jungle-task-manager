@@ -79,6 +79,21 @@ export default function AuthPage() {
     }
   };
 
+  const translateError = (message: string) => {
+    switch (message) {
+      case 'Account is inactive. Contact administrator.':
+        return 'Conta inativa. Entre em contato com o administrador.';
+      case 'Email or username already exists':
+        return 'Email ou nome de usuário já existe';
+      case 'Email não encontrado':
+        return 'Email não encontrado';
+      case 'Senha incorreta':
+        return 'Senha incorreta';
+      default:
+        return message;
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#0b0809' }}>
       <Card 
@@ -91,9 +106,13 @@ export default function AuthPage() {
         }}
       >
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-bold mb-2" style={{ color: '#7fe41a' }}>
-            Jungle
-          </CardTitle>
+          <div className="flex flex-col items-center mb-4">
+            <img 
+              src="/assets/jungle_logo.svg" 
+              alt="Jungle Logo" 
+              className="w-16 h-16 mb-2"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-white mb-2">
             Task Manager
           </CardTitle>
@@ -105,7 +124,7 @@ export default function AuthPage() {
         <CardContent className="space-y-4">
           {error && (
             <div className="bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded">
-              {error}
+              {translateError(error)}
             </div>
           )}
           

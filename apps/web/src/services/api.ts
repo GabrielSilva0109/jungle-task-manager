@@ -102,6 +102,8 @@ export const authApi = {
     api.get('/auth/users').then(res => res.data),
   updateUser: (id: string, data: { role?: string; isActive?: boolean }): Promise<any> =>
     api.patch(`/auth/users/${id}`, data).then(res => res.data),
+  updateProfile: (id: string, data: { username?: string; email?: string; bio?: string; phone?: string; company?: string; position?: string }): Promise<any> =>
+    api.patch(`/auth/users/${id}`, data).then(res => res.data),
   deleteUser: (id: string): Promise<{ success: boolean; message: string }> =>
     api.delete(`/auth/users/${id}`).then(res => res.data),
 };
