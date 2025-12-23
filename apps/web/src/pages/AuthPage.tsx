@@ -80,20 +80,31 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#0b0809' }}>
+      <Card 
+        className="w-full max-w-md"
+        style={{ 
+          backgroundColor: '#0b0809', 
+          borderColor: 'rgba(64, 64, 64, 0.3)',
+          borderWidth: '1px',
+          borderStyle: 'solid'
+        }}
+      >
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">
-            Jungle Task Manager
+          <CardTitle className="text-4xl font-bold mb-2" style={{ color: '#7fe41a' }}>
+            Jungle
           </CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-white mb-2">
+            Task Manager
+          </CardTitle>
+          <CardDescription className="text-gray-400">
             {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded">
               {error}
             </div>
           )}
@@ -101,7 +112,7 @@ export default function AuthPage() {
           {isLogin ? (
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <div>
-                <Label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="login-email" className="block text-sm font-medium text-gray-300 mb-2">
                   Email
                 </Label>
                 <Input
@@ -110,16 +121,17 @@ export default function AuthPage() {
                   type="email"
                   placeholder="seu@email.com"
                   disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                 />
                 {loginForm.formState.errors.email && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-400 mt-2">
                     {loginForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
               
               <div>
-                <Label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="login-password" className="block text-sm font-medium text-gray-300 mb-2">
                   Senha
                 </Label>
                 <Input
@@ -128,9 +140,10 @@ export default function AuthPage() {
                   type="password"
                   placeholder="••••••••"
                   disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                 />
                 {loginForm.formState.errors.password && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-400 mt-2">
                     {loginForm.formState.errors.password.message}
                   </p>
                 )}
@@ -138,7 +151,8 @@ export default function AuthPage() {
               
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full py-3 px-4 text-black font-semibold rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed" 
+                style={{ backgroundColor: '#7fe41a' }}
                 disabled={isLoading}
               >
                 {isLoading ? 'Entrando...' : 'Entrar'}
@@ -147,7 +161,7 @@ export default function AuthPage() {
           ) : (
             <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
               <div>
-                <Label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="register-email" className="block text-sm font-medium text-gray-300 mb-2">
                   Email
                 </Label>
                 <Input
@@ -156,16 +170,17 @@ export default function AuthPage() {
                   type="email"
                   placeholder="seu@email.com"
                   disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                 />
                 {registerForm.formState.errors.email && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-400 mt-2">
                     {registerForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
               
               <div>
-                <Label htmlFor="register-username" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="register-username" className="block text-sm font-medium text-gray-300 mb-2">
                   Username
                 </Label>
                 <Input
@@ -174,16 +189,17 @@ export default function AuthPage() {
                   type="text"
                   placeholder="seuusername"
                   disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                 />
                 {registerForm.formState.errors.username && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-400 mt-2">
                     {registerForm.formState.errors.username.message}
                   </p>
                 )}
               </div>
               
               <div>
-                <Label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="register-password" className="block text-sm font-medium text-gray-300 mb-2">
                   Senha
                 </Label>
                 <Input
@@ -192,9 +208,10 @@ export default function AuthPage() {
                   type="password"
                   placeholder="••••••••"
                   disabled={isLoading}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                 />
                 {registerForm.formState.errors.password && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-400 mt-2">
                     {registerForm.formState.errors.password.message}
                   </p>
                 )}
@@ -209,6 +226,7 @@ export default function AuthPage() {
                   id="register-confirm-password"
                   type="password"
                   placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
                   disabled={isLoading}
                 />
                 {registerForm.formState.errors.confirmPassword && (
@@ -220,7 +238,8 @@ export default function AuthPage() {
               
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full py-3 px-4 text-black font-semibold rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed" 
+                style={{ backgroundColor: '#7fe41a' }}
                 disabled={isLoading}
               >
                 {isLoading ? 'Criando conta...' : 'Criar conta'}
@@ -240,15 +259,6 @@ export default function AuthPage() {
                 : 'Já tem conta? Faça login'
               }
             </button>
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded text-center">
-            <p className="text-xs text-gray-600">
-              💡 Sistema integrado com JWT e backend real
-            </p>
-            <div className="mt-2 text-xs text-gray-500">
-              Status: ✅ Auth Service • ✅ API Gateway • ✅ Database
-            </div>
           </div>
         </CardContent>
       </Card>

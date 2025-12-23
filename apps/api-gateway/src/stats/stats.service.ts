@@ -7,9 +7,13 @@ export class StatsService {
   private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3002';
   async getDashboardStats(userId: string) {
     try {
-      // Fetch all tasks to calculate statistics
+      // Fetch tasks for the specific user
       const allTasksResponse = await axios.get(`${this.tasksServiceUrl}/tasks`, {
-        params: { page: 1, size: 1000 } // Get all tasks
+        params: { 
+          page: 1, 
+          size: 1000, // Get all tasks
+          userId: userId // Filter by user
+        }
       });
       
       const tasks = allTasksResponse.data.data;

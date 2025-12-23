@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   UseGuards,
   Request,
+  Headers,
 } from '@nestjs/common';
 
 import { TasksService } from './tasks.service';
@@ -25,10 +26,15 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  async create(@Body() createTaskDto: CreateTaskDto, @Request() req: any) {
-    // For now, we'll use a hardcoded userId. In production, this would come from JWT
-    const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.tasksService.create(createTaskDto, userId);
+  async create(
+    @Body() createTaskDto: CreateTaskDto, 
+    @Headers('x-user-id') userId?: string,
+    @Request() req?: any
+  ) {
+    // Use x-user-id header from API Gateway
+    const currentUserId = userId || req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    console.log('🔧 [TASKS-SERVICE] Creating task with userId:', currentUserId, 'from header:', userId);
+    return this.tasksService.create(createTaskDto, currentUserId);
   }
 
   @Get()
@@ -37,14 +43,19 @@ export class TasksController {
     @Query('size') size?: string,
     @Query('search') search?: string,
     @Query('status') status?: TaskStatus,
-    @Query('userId') userId?: string,
+    @Headers('x-user-id') userId?: string,
+    @Request() req?: any,
   ) {
     const paginationDto = {
       page: page ? parseInt(page, 10) : 1,
       size: size ? parseInt(size, 10) : 10,
     };
     
-    return this.tasksService.findAll(paginationDto, search, status, userId);
+    // Get userId from x-user-id header from API Gateway
+    const currentUserId = userId || req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    console.log('🔧 [TASKS-SERVICE] Finding tasks with userId:', currentUserId, 'from header:', userId);
+    
+    return this.tasksService.findAll(paginationDto, search, status, currentUserId);
   }
 
   @Get(':id')

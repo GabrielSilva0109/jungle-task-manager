@@ -10,8 +10,16 @@ export class TasksService {
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
     try {
-      // Don't send userId in body, let tasks-service use its hardcoded value
-      const response = await axios.post(`${this.tasksServiceUrl}/tasks`, createTaskDto);
+      // Send userId in x-user-id header to tasks-service
+      const response = await axios.post(
+        `${this.tasksServiceUrl}/tasks`, 
+        createTaskDto,
+        {
+          headers: {
+            'x-user-id': userId
+          }
+        }
+      );
       return response.data;
     } catch (error) {
       throw error;
@@ -23,11 +31,18 @@ export class TasksService {
       const params: any = {};
       if (search) params.search = search;
       if (status) params.status = status;
-      if (userId) params.userId = userId;
       if (paginationDto.page) params.page = Number(paginationDto.page);
       if (paginationDto.size) params.size = Number(paginationDto.size);
       
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks`, { params });
+      const headers: any = {};
+      if (userId) {
+        headers['x-user-id'] = userId;
+      }
+      
+      const response = await axios.get(`${this.tasksServiceUrl}/tasks`, { 
+        params,
+        headers 
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -45,8 +60,16 @@ export class TasksService {
 
   async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
     try {
-      // Don't send userId in body, let tasks-service handle user context
-      const response = await axios.patch(`${this.tasksServiceUrl}/tasks/${id}`, updateTaskDto);
+      // Send userId in x-user-id header to tasks-service
+      const response = await axios.patch(
+        `${this.tasksServiceUrl}/tasks/${id}`, 
+        updateTaskDto,
+        {
+          headers: {
+            'x-user-id': userId
+          }
+        }
+      );
       return response.data;
     } catch (error) {
       throw error;

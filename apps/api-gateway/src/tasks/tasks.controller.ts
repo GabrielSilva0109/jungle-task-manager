@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Headers,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -28,10 +29,27 @@ export class TasksController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new task' })
-  create(@Body() createTaskDto: CreateTaskDto, @Req() req: Request) {
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = req.user && (req.user as any).userId ? (req.user as any).userId : '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.tasksService.create(createTaskDto, userId);
+  create(
+    @Body() createTaskDto: CreateTaskDto, 
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request
+  ) {
+    // Use header user ID or fallback to hardcoded, but ONLY if header is truly empty
+    let currentUserId: string;
+    
+    if (userId && userId.trim() && userId.trim().length > 0) {
+      currentUserId = userId.trim();
+    } else if (req?.user && (req.user as any).userId) {
+      currentUserId = (req.user as any).userId;
+    } else {
+      currentUserId = '8f366c55-7522-4142-956f-21c348dda0ee';
+    }
+    
+    console.log('🔧 Creating task - x-user-id header received:', userId);
+    console.log('🔧 x-user-id after trim check:', userId && userId.trim());
+    console.log('🔧 Final user ID being used:', currentUserId);
+    console.log('🔧 Task data:', createTaskDto);
+    return this.tasksService.create(createTaskDto, currentUserId);
   }
 
   @Get()
@@ -42,6 +60,7 @@ export class TasksController {
     @Query('search') search?: string,
     @Query('status') status?: TaskStatus,
     @Query('assigned') assigned?: boolean,
+    @Headers('x-user-id') userId?: string,
     @Req() req?: Request,
   ) {
     const paginationDto = {
@@ -49,10 +68,9 @@ export class TasksController {
       size: size ? parseInt(size, 10) : 10,
     };
     
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = assigned && req?.user && (req.user as any).userId ? (req.user as any).userId : 
-                   assigned ? '8f366c55-7522-4142-956f-21c348dda0ee' : undefined;
-    return this.tasksService.findAll(paginationDto, search, status, userId);
+    // Use header user ID or fallback to hardcoded
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.findAll(paginationDto, search, status, currentUserId);
   }
 
   @Get(':id')
@@ -66,18 +84,23 @@ export class TasksController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTaskDto: UpdateTaskDto,
-    @Req() req: Request,
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request,
   ) {
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = req.user && (req.user as any).userId ? (req.user as any).userId : '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.tasksService.update(id, updateTaskDto, userId);
+    // Use header user ID or fallback to hardcoded
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.update(id, updateTaskDto, currentUserId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a task' })
-  remove(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = req.user && (req.user as any).userId ? (req.user as any).userId : '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.tasksService.remove(id, userId);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request
+  ) {
+    // Use header user ID or fallback to hardcoded
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.tasksService.remove(id, currentUserId);
   }
 }

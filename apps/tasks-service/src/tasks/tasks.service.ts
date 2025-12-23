@@ -29,6 +29,10 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
+    console.log('🔧 Tasks Service - Creating task');
+    console.log('🔧 User ID:', userId);
+    console.log('🔧 Task data:', createTaskDto);
+    
     const { assignedUserIds, ...taskData } = createTaskDto;
     
     const task = this.taskRepository.create({
@@ -36,8 +40,12 @@ export class TasksService {
       createdBy: userId,
       deadline: new Date(createTaskDto.deadline),
     });
+    
+    console.log('🔧 Task entity before save:', task);
 
     const savedTask = await this.taskRepository.save(task);
+    
+    console.log('🔧 Task saved successfully:', savedTask);
 
     // Assign users to task
     if (assignedUserIds && assignedUserIds.length > 0) {
@@ -95,8 +103,12 @@ export class TasksService {
       queryBuilder.andWhere('task.status = :status', { status });
     }
 
+    // Always filter by user - either created by user OR assigned to user
     if (userId) {
-      queryBuilder.andWhere('assignment.userId = :userId', { userId });
+      queryBuilder.andWhere(
+        '(task.createdBy = :userId OR assignment.userId = :userId)',
+        { userId }
+      );
     }
 
     const [tasks, total] = await queryBuilder

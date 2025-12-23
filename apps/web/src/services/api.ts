@@ -14,19 +14,46 @@ import {
   Notification,
 } from '@jungle/types';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 30000, // Aumentar timeout para 30 segundos
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and user ID
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  console.log('🔗 API Request:', config.method?.toUpperCase(), config.url);
+  
+  // Get token from auth storage
+  const authData = localStorage.getItem('auth-storage');
+  if (authData) {
+    try {
+      const { state } = JSON.parse(authData);
+      
+      // Add auth token if available
+      if (state.tokens?.accessToken) {
+        config.headers.Authorization = `Bearer ${state.tokens.accessToken}`;
+        console.log('🔑 Auth token added successfully');
+      } else {
+        console.log('❌ No access token found in auth storage');
+      }
+      
+      // Add user ID if available
+      if (state.user?.id) {
+        config.headers['x-user-id'] = state.user.id;
+        console.log('👤 User ID added to headers:', state.user.id);
+      } else {
+        console.log('❌ No user ID found in auth state');
+      }
+    } catch (error) {
+      console.error('Error parsing auth data:', error);
+    }
+  } else {
+    console.log('❌ No auth data found in localStorage');
   }
+  
+  console.log('📡 Request headers x-user-id:', config.headers['x-user-id']);
   return config;
 });
 

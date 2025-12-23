@@ -59,7 +59,7 @@ export default function Perfil() {
         lastLogin: user?.updatedAt || new Date().toISOString()
       });
     } catch (error) {
-      console.error('Erro ao carregar estatísticas do usuário:', error);
+      console.error('Erro ao carregar estatisticas do usuario:', error);
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export default function Perfil() {
   const handleChangePassword = () => {
     // Aqui seria feita a chamada para a API para alterar a senha
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('As senhas não coincidem!');
+      alert('As senhas nao coincidem!');
       return;
     }
     console.log('Alterando senha');
@@ -95,16 +95,16 @@ export default function Perfil() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header da página */}
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header da pagina */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Perfil do Usuário</h1>
-        <p className="text-gray-400">Gerencie suas informações pessoais e configurações</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Perfil do Usuario</h1>
+        <p className="text-gray-400">Gerencie suas informacoes pessoais e configuracoes</p>
       </div>
 
-      {/* Informações principais */}
+      {/* Informacoes principais */}
       <StandardCard 
-        title="Informações Pessoais"
+        title="Informacoes Pessoais"
         headerAction={
           !editMode ? (
             <Button 
@@ -149,7 +149,7 @@ export default function Perfil() {
             <User className="w-12 h-12" style={{ color: '#7fe41a' }} />
           </div>
 
-          {/* Informações */}
+          {/* Informacoes */}
           <div className="flex-1 space-y-4">
             {!editMode ? (
               <>
@@ -164,15 +164,15 @@ export default function Perfil() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                   <div>
                     <label className="text-gray-400 text-sm">Telefone</label>
-                    <p className="text-white">{editData.phone || 'Não informado'}</p>
+                    <p className="text-white">{editData.phone || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Empresa</label>
-                    <p className="text-white">{editData.company || 'Não informado'}</p>
+                    <p className="text-white">{editData.company || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Cargo</label>
-                    <p className="text-white">{editData.position || 'Não informado'}</p>
+                    <p className="text-white">{editData.position || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Membro desde</label>
@@ -191,7 +191,7 @@ export default function Perfil() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-white text-sm font-medium mb-2 block">Nome de usuário</label>
+                    <label className="text-white text-sm font-medium mb-2 block">Nome de usuario</label>
                     <Input
                       value={editData.username}
                       onChange={(e) => setEditData({ ...editData, username: e.target.value })}
@@ -244,7 +244,7 @@ export default function Perfil() {
                   <Textarea                 
                     value={editData.bio}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditData({ ...editData, bio: e.target.value })}
-                    placeholder="Conte um pouco sobre você..."
+                    placeholder="Conte um pouco sobre voce..."
                     className="bg-gray-800 border-gray-700 text-white min-h-[100px]"
                   />
                 </div>
@@ -255,15 +255,15 @@ export default function Perfil() {
       </StandardCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Estatísticas */}
-        <StandardCard title="Estatísticas">
+        {/* Estatisticas */}
+        <StandardCard title="Estatisticas">
           <div className="space-y-4">
             {loading ? (
-              <div className="text-center text-gray-400">Carregando estatísticas...</div>
+              <div className="text-center text-gray-400">Carregando estatisticas...</div>
             ) : (
               <>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Tarefas Concluídas</span>
+                  <span className="text-gray-400">Tarefas Concluidas</span>
                   <span className="text-white font-semibold">{profileStats.tasksCompleted}</span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -276,7 +276,7 @@ export default function Perfil() {
                 </div>
                 <div className="border-t border-gray-700 pt-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Taxa de Conclusão</span>
+                    <span className="text-gray-400">Taxa de Conclusao</span>
                     <span className="text-white font-semibold">
                       {profileStats.totalTasks > 0 ? Math.round((profileStats.tasksCompleted / profileStats.totalTasks) * 100) : 0}%
                     </span>
@@ -287,8 +287,8 @@ export default function Perfil() {
           </div>
         </StandardCard>
 
-        {/* Informações da conta */}
-        <StandardCard title="Informações da Conta">
+        {/* Informacoes da conta */}
+        <StandardCard title="Informacoes da Conta">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <Shield className="w-5 h-5" style={{ color: '#7fe41a' }} />
@@ -301,7 +301,7 @@ export default function Perfil() {
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5" style={{ color: '#7fe41a' }} />
               <div>
-                <p className="text-white font-medium">Último Login</p>
+                <p className="text-white font-medium">Ultimo Login</p>
                 <p className="text-gray-400 text-sm">
                   {new Date(profileStats.lastLogin).toLocaleString('pt-BR')}
                 </p>
@@ -311,7 +311,7 @@ export default function Perfil() {
         </StandardCard>
       </div>
 
-      {/* Segurança */}
+      {/* Seguranca */}
       <StandardCard title="Segurança">
         {!showPasswordForm ? (
           <div className="flex items-center justify-between">

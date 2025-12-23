@@ -57,80 +57,101 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900" style={{ backgroundColor: '#1a1a1a' }}>
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isRegister ? 'Criar conta' : 'Entrar na sua conta'}
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                {...registerField('email')}
-                type="email"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-            
-            {isRegister && (
+        <div 
+          className="bg-black rounded-lg p-8 shadow-xl border"
+          style={{ 
+            borderColor: 'rgba(127, 228, 26, 0.3)',
+            borderWidth: '1px'
+          }}
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-2" style={{ color: '#7fe41a' }}>
+              Jungle
+            </h1>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Task Manager
+            </h2>
+            <p className="text-gray-400">
+              {isRegister ? 'Criar sua conta' : 'Entre na sua conta'}
+            </p>
+          </div>
+          
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                  Nome de usuário
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
                 </label>
                 <input
-                  {...registerField('username')}
-                  type="text"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  {...registerField('email')}
+                  type="email"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
+                  placeholder="seu@email.com"
                 />
-                {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-400">{errors.email.message}</p>
                 )}
               </div>
-            )}
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Senha
-              </label>
-              <input
-                {...registerField('password')}
-                type="password"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              
+              {isRegister && (
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                    Nome de usuário
+                  </label>
+                  <input
+                    {...registerField('username')}
+                    type="text"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
+                    placeholder="seu nome"
+                  />
+                  {(errors as any).username && (
+                    <p className="mt-2 text-sm text-red-400">{(errors as any).username.message}</p>
+                  )}
+                </div>
               )}
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Senha
+                </label>
+                <input
+                  {...registerField('password')}
+                  type="password"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 transition-colors"
+                  placeholder="••••••••"
+                />
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-400">{errors.password.message}</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoading ? 'Carregando...' : (isRegister ? 'Criar conta' : 'Entrar')}
-            </button>
-          </div>
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 text-black font-semibold rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  backgroundColor: '#7fe41a',
+                }}
+              >
+                {isLoading ? 'Carregando...' : (isRegister ? 'Criar conta' : 'Entrar')}
+              </button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={toggleMode}
-              className="text-blue-600 hover:text-blue-500"
-            >
-              {isRegister ? 'Já tem uma conta? Entrar' : 'Não tem conta? Criar uma'}
-            </button>
-          </div>
-        </form>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-lime-400 hover:text-lime-300 font-medium transition-colors"
+                >
+                  {isRegister ? 'Já tem uma conta? Entrar' : 'Não tem conta? Criar uma'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

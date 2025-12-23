@@ -4,9 +4,33 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
-import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { tasksApi } from '../services/api';
+import { useAuthStore } from '../stores/auth';
 
+enum TaskPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH'
+}
+
+enum TaskStatus {
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  DONE = 'DONE',
+  CANCELLED = 'CANCELLED'
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'Pendente' | 'Em Progresso' | 'Concluída' | 'Cancelada';
+  priority: 'Baixa' | 'Média' | 'Alta';
+  assignedTo: string;
+  createdAt: string;
+  dueDate?: string;
+}
 interface Task {
   id: string;
   title: string;
@@ -19,6 +43,7 @@ interface Task {
 }
 
 export default function Tarefas() {
+  const { user, tokens, isAuthenticated } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -44,20 +69,48 @@ export default function Tarefas() {
   const loadTasks = async () => {
     try {
       setLoading(true);
+      
+      const authData = localStorage.getItem('auth-storage');
+      if (authData) {
+        const { state } = JSON.parse(authData);
+        console.log('👤 User from auth:', state.user);
+      } else {
+        console.log('❌ No auth data found');
+      }
+      
       const response = await tasksApi.getTasks({ page: 1, size: 100 });
-      setTasks(response.data.map(task => ({
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        status: task.status === 'TODO' ? 'Pendente' as const :
-                task.status === 'IN_PROGRESS' ? 'Em Progresso' as const :
-                task.status === 'DONE' ? 'Concluída' as const : 'Cancelada' as const,
-        priority: task.priority === 'LOW' ? 'Baixa' as const :
-                 task.priority === 'MEDIUM' ? 'Média' as const : 'Alta' as const,
-        assignedTo: 'Admin',
-        createdAt: task.createdAt,
-        dueDate: task.dueDate
-      })));
+      console.log('📋 Tasks fetched:', response.data);
+      setTasks(response.data.map(task => {
+        let status: 'Pendente' | 'Em Progresso' | 'Concluída' | 'Cancelada';
+        if (task.status === 'TODO') {
+          status = 'Pendente';
+        } else if (task.status === 'IN_PROGRESS') {
+          status = 'Em Progresso';
+        } else if (task.status === 'DONE') {
+          status = 'Concluída';
+        } else {
+          status = 'Cancelada';
+        }
+
+        let priority: 'Baixa' | 'Média' | 'Alta';
+        if (task.priority === 'LOW') {
+          priority = 'Baixa';
+        } else if (task.priority === 'MEDIUM') {
+          priority = 'Média';
+        } else {
+          priority = 'Alta';
+        }
+
+        return {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status,
+          priority,
+          assignedTo: 'Admin',
+          createdAt: task.createdAt.toString(),
+        };
+      }));
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
       setTasks([]);
@@ -96,10 +149,25 @@ export default function Tarefas() {
         const taskData = {
           title: newTask.title,
           description: newTask.description,
-          priority: newTask.priority === 'Baixa' ? 'LOW' as const :
-                   newTask.priority === 'Média' ? 'MEDIUM' as const : 'HIGH' as const,
+          priority: (newTask.priority === 'Baixa' ? TaskPriority.LOW :
+                   newTask.priority === 'Média' ? TaskPriority.MEDIUM : TaskPriority.HIGH),
           deadline: newTask.dueDate || '2024-12-31T23:59:59.000Z'
         };
+
+        console.log('📋 Creating task:', taskData);
+        console.log('🏪 Auth Store - User:', user);
+        console.log('🏪 Auth Store - Tokens:', tokens);
+        console.log('🏪 Auth Store - isAuthenticated:', isAuthenticated);
+        
+        const authData = localStorage.getItem('auth-storage');
+        if (authData) {
+          const { state } = JSON.parse(authData);
+          console.log('👤 Current user ID from localStorage:', state.user?.id);
+          console.log('👤 User data:', state.user);
+          console.log('🔑 Tokens from localStorage:', state.tokens);
+        } else {
+          console.log('❌ No auth data found in localStorage');
+        }
         
         await tasksApi.createTask(taskData);
         await loadTasks(); // Recarregar tarefas
@@ -128,8 +196,8 @@ export default function Tarefas() {
         const taskData = {
           title: newTask.title,
           description: newTask.description,
-          priority: newTask.priority === 'Baixa' ? 'LOW' as const :
-                   newTask.priority === 'Média' ? 'MEDIUM' as const : 'HIGH' as const,
+          priority: newTask.priority === 'Baixa' ? TaskPriority.LOW :
+                   newTask.priority === 'Média' ? TaskPriority.MEDIUM : TaskPriority.HIGH,
           deadline: newTask.dueDate || '2024-12-31T23:59:59.000Z'
         };
         
@@ -146,13 +214,13 @@ export default function Tarefas() {
 
   const handleStatusChange = async (taskId: string, newStatus: 'Pendente' | 'Em Progresso' | 'Concluída') => {
     try {
-      const statusMapping = {
-        'Pendente': 'TODO',
-        'Em Progresso': 'IN_PROGRESS',
-        'Concluída': 'DONE'
+      const statusMapping: Record<'Pendente' | 'Em Progresso' | 'Concluída', TaskStatus> = {
+        'Pendente': TaskStatus.TODO,
+        'Em Progresso': TaskStatus.IN_PROGRESS,
+        'Concluída': TaskStatus.DONE
       };
       
-      await tasksApi.updateTask(taskId, { status: statusMapping[newStatus] });
+      await tasksApi.updateTask(taskId, { status: statusMapping[newStatus] as TaskStatus });
       await loadTasks(); // Recarregar tarefas
     } catch (error) {
       console.error('Erro ao atualizar status da tarefa:', error);

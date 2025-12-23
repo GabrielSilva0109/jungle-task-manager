@@ -3,6 +3,7 @@ import {
   Get,
   UseGuards,
   Req,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -20,17 +21,23 @@ export class StatsController {
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get dashboard statistics' })
-  async getDashboardStats(@Req() req: Request) {
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = req.user && (req.user as any).userId ? (req.user as any).userId : '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.statsService.getDashboardStats(userId);
+  async getDashboardStats(
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request
+  ) {
+    // Use header user ID or fallback to hardcoded
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.statsService.getDashboardStats(currentUserId);
   }
 
   @Get('users')
   @ApiOperation({ summary: 'Get user statistics' })
-  async getUserStats(@Req() req: Request) {
-    // Temporary fix: use hardcoded userId when auth is disabled
-    const userId = req.user && (req.user as any).userId ? (req.user as any).userId : '8f366c55-7522-4142-956f-21c348dda0ee';
-    return this.statsService.getUserStats(userId);
+  async getUserStats(
+    @Headers('x-user-id') userId?: string,
+    @Req() req?: Request
+  ) {
+    // Use header user ID or fallback to hardcoded
+    const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
+    return this.statsService.getUserStats(currentUserId);
   }
 }
