@@ -9,6 +9,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useAuthStore } from '../stores/auth';
 import { authApi } from '../services/api';
+import jungleLogo from '../assets/jungle.svg';
 
 // Validation schemas
 const loginSchema = z.object({
@@ -108,9 +109,9 @@ export default function AuthPage() {
         <CardHeader className="text-center">
           <div className="flex flex-col items-center mb-4">
             <img 
-              src="/assets/jungle_logo.svg" 
+              src={jungleLogo}
               alt="Jungle Logo" 
-              className="w-16 h-16 mb-2"
+              style={{width: '164px'}}
             />
           </div>
           <CardTitle className="text-2xl font-bold text-white mb-2">

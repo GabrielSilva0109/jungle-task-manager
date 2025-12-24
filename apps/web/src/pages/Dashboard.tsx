@@ -9,12 +9,12 @@ import Home from './Home';
 import Tarefas from './Tarefas';
 import Usuarios from './Usuarios';
 import Perfil from './Perfil';
+import jungleLogo from '../assets/jungle.svg';
 
 export default function Dashboard() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [currentPage, setCurrentPage] = useState('home');
   const { notifications, removeNotification, success, error: notifyError } = useNotifications();
-  const hasShownWelcome = useRef(false);
 
   // Navegação entre páginas
   const renderCurrentPage = () => {
@@ -32,22 +32,12 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    // Show welcome notification only once
-    if (!hasShownWelcome.current) {
-      success('Bem-vindo!', `Login realizado com sucesso. Bem-vindo ao Jungle Task Manager, ${user?.username}!`);
-      hasShownWelcome.current = true;
-    }
-  }, [isAuthenticated, user, success]);
-
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0b0809' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#2a2627' }}>
       {/* Header */}
       <header 
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg shadow-lg"
@@ -62,9 +52,9 @@ export default function Dashboard() {
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
               <img 
-                src="/assets/jungle_logo.svg" 
+                src={jungleLogo}
                 alt="Jungle Logo" 
-                className="w-8 h-8 mr-3"
+                style={{width: '64px'}}
               />
             </div>
 
@@ -102,7 +92,6 @@ export default function Dashboard() {
                 <span className="text-sm" style={{ color: '#9f9fa9' }}>
                   Olá, {user?.username}!
                 </span>
-                <StatusIndicator isOnline={true} lastSync={new Date()} />
               </div>
               <Button 
                 onClick={logout} 

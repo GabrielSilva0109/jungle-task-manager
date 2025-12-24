@@ -18,9 +18,9 @@ export default function StandardCard({
 }: StandardCardProps) {
   return (
     <Card 
-      className={`transition-all duration-200 hover:shadow-lg ${className}`}
+      className={`transition-all duration-200 shadow-lg hover:shadow-lg ${className}`}
       style={{ 
-        backgroundColor: '#000000', 
+        backgroundColor: '#2a2627', 
         borderColor: 'rgba(127, 228, 26, 0.3)',
         borderWidth: '1px',
         borderStyle: 'solid'
