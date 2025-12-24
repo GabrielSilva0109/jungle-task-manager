@@ -1,10 +1,11 @@
 import {
   Injectable,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import axios from 'axios';
+import { ClientProxy } from '@nestjs/microservices';
 
 import { Comment } from '../entities/comment.entity';
 import { Task } from '../entities/task.entity';
@@ -21,6 +22,8 @@ export class CommentsService {
     private commentRepository: Repository<Comment>,
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
+    @Inject('NOTIFICATIONS_SERVICE')
+    private notificationsClient: ClientProxy,
   ) {}
 
   async create(
@@ -42,18 +45,17 @@ export class CommentsService {
 
     const savedComment = await this.commentRepository.save(comment);
 
-    // Send notification via HTTP
+    // Emit comment.created event via RabbitMQ
     try {
-      await axios.post('http://notifications-service:3004/api/notifications', {
-        type: 'comment.created',
-        data: {
-          taskId,
-          commentId: savedComment.id,
-          authorId: userId,
-        },
+      this.notificationsClient.emit('comment.created', {
+        taskId,
+        commentId: savedComment.id,
+        authorId: userId,
+        comment: savedComment,
       });
+      console.log('✅ Comment created event emitted via RabbitMQ');
     } catch (error: any) {
-      console.warn('Failed to send notification:', error.message || error);
+      console.warn('⚠️ Failed to emit comment creation event:', error.message || error);
     }
 
     return savedComment;

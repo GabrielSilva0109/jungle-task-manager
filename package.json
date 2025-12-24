@@ -23,6 +23,7 @@
   },
   "packageManager": "npm@9.0.0",
   "dependencies": {
+    "amqplib": "^0.10.9",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3"
   }

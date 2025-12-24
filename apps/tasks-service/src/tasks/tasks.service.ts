@@ -2,9 +2,11 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Like } from 'typeorm';
+import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 
 import { Task } from '../entities/task.entity';
@@ -26,6 +28,8 @@ export class TasksService {
     @InjectRepository(TaskAssignment)
     private assignmentRepository: Repository<TaskAssignment>,
     private auditService: AuditService,
+    @Inject('NOTIFICATIONS_SERVICE')
+    private notificationsClient: ClientProxy,
   ) {}
 
   async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
@@ -60,18 +64,17 @@ export class TasksService {
       userId,
     });
 
-    // Send notification via HTTP
+    // Emit task.created event via RabbitMQ
     try {
-      await axios.post('http://notifications-service:3004/api/notifications', {
-        type: 'task.created',
-        data: {
-          taskId: savedTask.id,
-          userId,
-          assignedUserIds: assignedUserIds || [],
-        },
+      this.notificationsClient.emit('task.created', {
+        taskId: savedTask.id,
+        userId,
+        assignedUserIds: assignedUserIds || [],
+        task: savedTask,
       });
+      console.log('✅ Task created event emitted via RabbitMQ');
     } catch (error: any) {
-      console.warn('Failed to send task creation notification:', error.message || error);
+      console.warn('⚠️ Failed to emit task creation event:', error.message || error);
     }
 
     return this.findOne(savedTask.id);
@@ -175,19 +178,18 @@ export class TasksService {
       userId,
     });
 
-    // Send notification via HTTP
+    // Emit task.updated event via RabbitMQ
     try {
-      await axios.post('http://notifications-service:3004/api/notifications', {
-        type: 'task.updated',
-        data: {
-          taskId: id,
-          userId,
-          changes: updateTaskDto,
-          assignedUserIds: assignedUserIds || [],
-        },
+      this.notificationsClient.emit('task.updated', {
+        taskId: id,
+        userId,
+        changes: updateTaskDto,
+        assignedUserIds: assignedUserIds || [],
+        task: updatedTask,
       });
+      console.log('✅ Task updated event emitted via RabbitMQ');
     } catch (error: any) {
-      console.warn('Failed to send task update notification:', error.message || error);
+      console.warn('⚠️ Failed to emit task update event:', error.message || error);
     }
 
     return this.findOne(id);
