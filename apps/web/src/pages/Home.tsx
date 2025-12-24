@@ -52,7 +52,7 @@ export default function Home() {
       </div>
 
       {/* Cards de estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StandardCard>
           <div className="text-center p-4">
             <div className="text-2xl font-bold text-white mb-2">{dashboardStats?.activeTasks || 0}</div>

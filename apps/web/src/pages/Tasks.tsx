@@ -42,7 +42,7 @@ interface Task {
   dueDate?: string;
 }
 
-export default function Tarefas() {
+export default function Tasks() {
   const { user, tokens, isAuthenticated } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);

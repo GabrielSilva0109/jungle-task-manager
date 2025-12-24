@@ -18,7 +18,7 @@ interface User {
   tasksCount: number;
 }
 
-export default function Usuarios() {
+export default function Users() {
   const { user: currentUser } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -224,15 +224,15 @@ export default function Usuarios() {
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header da página */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Usuários</h1>
-          <p className="text-gray-400">Gerencie todos os usuários do sistema</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Usuários</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Gerencie todos os usuários do sistema</p>
         </div>
         
         <Button 
           style={{ backgroundColor: '#7fe41a', color: '#000000' }}
-          className="hover:opacity-90"
+          className="hover:opacity-90 w-full sm:w-auto"
         >
           <UserPlus className="w-4 h-4 mr-2" />
           Novo Usuário
@@ -240,22 +240,22 @@ export default function Usuarios() {
       </div>
 
       {/* Cards de estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statsCards.map((stat, index) => (
           <StandardCard key={index}>
-            <div className="text-center p-4">
-              <div className="text-2xl font-bold text-white mb-2">{stat.value}</div>
-              <div className="text-sm font-medium text-white mb-1">{stat.title}</div>
-              <div className="text-xs text-gray-400">{stat.description}</div>
-            </div>
+        <div className="text-center p-4">
+          <div className="text-2xl font-bold text-white mb-2">{stat.value}</div>
+          <div className="text-sm font-medium text-white mb-1">{stat.title}</div>
+          <div className="text-xs text-gray-400">{stat.description}</div>
+        </div>
           </StandardCard>
         ))}
       </div>
 
       {/* Filtros e busca */}
       <StandardCard>
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 relative">
+        <div className="flex flex-col gap-4">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               value={searchTerm}
@@ -265,11 +265,11 @@ export default function Usuarios() {
             />
           </div>
           
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
+              className="flex-1 sm:flex-none bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
             >
               <option value="all">Todos os Status</option>
               <option value="active">Ativo</option>
@@ -279,7 +279,7 @@ export default function Usuarios() {
             <select 
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as 'all' | 'admin' | 'user' | 'viewer')}
-              className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
+              className="flex-1 sm:flex-none bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2 text-sm"
             >
               <option value="all">Todas as Funções</option>
               <option value="admin">Admin</option>
@@ -294,24 +294,83 @@ export default function Usuarios() {
       <div className="space-y-4">
         {filteredUsers.map((user) => (
           <StandardCard key={user.id}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="space-y-4">
+              {/* Header do usuário - avatar, nome e badges */}
+              <div className="flex items-start gap-4">
                 {/* Avatar */}
                 <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: 'rgba(127, 228, 26, 0.2)' }}
                 >
                   <User className="w-6 h-6" style={{ color: '#7fe41a' }} />
                 </div>
                 
-                {/* Informações do usuário */}
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-white font-semibold text-lg">{user.username}</h3>
+                {/* Informações principais */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <h3 className="text-white font-semibold text-lg truncate">{user.username}</h3>
                     
+                    {/* Ações desktop */}
+                    <div className="hidden sm:flex items-center space-x-2">
+                      {isCurrentUserAdmin && (
+                        editingUser === user.id ? (
+                          // Botões de salvar/cancelar
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                              onClick={() => handleSaveUser(user.id)}
+                            >
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-gray-400 hover:text-gray-300 hover:bg-gray-400/10"
+                              onClick={handleCancelEdit}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          // Botões de editar e excluir
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            
+                            {/* Prevent deleting own account and prevent deleting last admin */}
+                            {currentUserData?.id !== user.id && (user.role !== 'admin' || users.filter(u => u.role === 'admin').length > 1) && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                onClick={() => handleDeleteUser(user.id, user.username)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
+                        )
+                      )}
+                      
+                      {!isCurrentUserAdmin && (
+                        <span className="text-xs text-gray-500">Sem permissão</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Badges de status e role */}
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {editingUser === user.id && isCurrentUserAdmin ? (
-                      // Edit mode
-                      <>
+                      // Edit mode - mobile and desktop
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <select
                           value={editData.role}
                           onChange={(e) => setEditData({ ...editData, role: e.target.value })}
@@ -330,18 +389,20 @@ export default function Usuarios() {
                           <option value="active">Ativo</option>
                           <option value="inactive">Inativo</option>
                         </select>
-                      </>
+                      </div>
                     ) : (
                       // View mode
                       <>
                         <Badge 
                           variant="secondary"
+                          className="text-xs"
                           style={{ backgroundColor: `${getRoleColor(user.role)}20`, color: getRoleColor(user.role) }}
                         >
                           {user.role}
                         </Badge>
                         <Badge 
                           variant="secondary"
+                          className="text-xs"
                           style={{ backgroundColor: `${getStatusColor(user.isActive)}20`, color: getStatusColor(user.isActive) }}
                         >
                           {user.isActive ? 'Ativo' : 'Inativo'}
@@ -349,60 +410,66 @@ export default function Usuarios() {
                       </>
                     )}
                   </div>
-                  
-                  <div className="flex items-center space-x-4 text-sm text-gray-400 mb-2">
-                    <div className="flex items-center space-x-1">
-                      <Mail className="w-3 h-3" />
-                      <span>{user.email}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>Criado em {new Date(user.createdAt).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4 text-sm text-gray-400">
-                    <span>{user.tasksCount} tarefas</span>
-                    {user.lastLogin && (
-                      <span>Último login: {new Date(user.lastLogin).toLocaleDateString('pt-BR')}</span>
-                    )}
-                  </div>
                 </div>
               </div>
               
-              {/* Botões de ação para admin */}
-              <div className="flex items-center space-x-2">
-                {isCurrentUserAdmin && (
-                  editingUser === user.id ? (
-                    // Botões de salvar/cancelar
+              {/* Informações de contato e datas */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-1 text-sm text-gray-400">
+                  <Mail className="w-3 h-3 flex-shrink-0" />
+                  <span className="break-all">{user.email}</span>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 flex-shrink-0" />
+                    <span>Criado em {new Date(user.createdAt).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  
+                  <span>{user.tasksCount} tarefas</span>
+                  
+                  {user.lastLogin && (
+                    <span>Último login: {new Date(user.lastLogin).toLocaleDateString('pt-BR')}</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Ações mobile - aparece apenas em telas pequenas */}
+              {isCurrentUserAdmin && (
+                <div className="flex sm:hidden gap-2 pt-3 border-t border-gray-700">
+                  {editingUser === user.id ? (
+                    // Botões de salvar/cancelar mobile
                     <>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                        className="flex-1 text-green-400 hover:text-green-300 hover:bg-green-400/10"
                         onClick={() => handleSaveUser(user.id)}
                       >
-                        <Save className="w-4 h-4" />
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-gray-400 hover:text-gray-300 hover:bg-gray-400/10"
+                        className="flex-1 text-gray-400 hover:text-gray-300 hover:bg-gray-400/10"
                         onClick={handleCancelEdit}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-4 h-4 mr-2" />
+                        Cancelar
                       </Button>
                     </>
                   ) : (
-                    // Botões de editar e excluir
+                    // Botões de editar e excluir mobile
                     <>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                        className="flex-1 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                         onClick={() => handleEditUser(user)}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
                       </Button>
                       
                       {/* Prevent deleting own account and prevent deleting last admin */}
@@ -410,20 +477,23 @@ export default function Usuarios() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                          className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-400/10"
                           onClick={() => handleDeleteUser(user.id, user.username)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir
                         </Button>
                       )}
                     </>
-                  )
-                )}
-                
-                {!isCurrentUserAdmin && (
-                  <span className="text-xs text-gray-500">Sem permissão</span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
+              
+              {!isCurrentUserAdmin && (
+                <div className="flex sm:hidden pt-3 border-t border-gray-700 justify-center">
+                  <span className="text-xs text-gray-500">Sem permissão para editar</span>
+                </div>
+              )}
             </div>
           </StandardCard>
         ))}

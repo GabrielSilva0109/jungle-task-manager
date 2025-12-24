@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/auth';
 import { User, Mail, Calendar, Key, Edit, Save, X, Shield } from 'lucide-react';
 import { tasksApi, authApi } from '../services/api';
 
-export default function Perfil() {
+export default function Profile() {
   const { user, setUser } = useAuthStore();
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -163,8 +163,8 @@ export default function Perfil() {
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header da pagina */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Perfil do Usuario</h1>
-        <p className="text-gray-400">Gerencie suas informacoes pessoais e configuracoes</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Perfil do Usuario</h1>
+        <p className="text-gray-400 text-sm sm:text-base">Gerencie suas informacoes pessoais e configuracoes</p>
       </div>
 
       {/* Informacoes principais */}
@@ -177,18 +177,19 @@ export default function Perfil() {
               variant="outline" 
               size="sm"
               style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+              className="w-full sm:w-auto"
             >
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </Button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 onClick={handleSaveProfile}
                 disabled={saving}
                 size="sm"
                 style={{ backgroundColor: '#7fe41a', color: '#000000' }}
-                className="hover:opacity-90"
+                className="hover:opacity-90 w-full sm:w-auto"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? 'Salvando...' : 'Salvar'}
@@ -199,6 +200,7 @@ export default function Perfil() {
                 variant="outline" 
                 size="sm"
                 style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+                className="w-full sm:w-auto"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancelar
@@ -207,56 +209,56 @@ export default function Perfil() {
           )
         }
       >
-        <div className="flex items-start space-x-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           {/* Avatar */}
           <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center flex-shrink-0"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0"
             style={{ backgroundColor: 'rgba(127, 228, 26, 0.2)' }}
           >
-            <User className="w-12 h-12" style={{ color: '#7fe41a' }} />
+            <User className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: '#7fe41a' }} />
           </div>
 
           {/* Informacoes */}
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 w-full space-y-4">
             {!editMode ? (
               <>
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-1">{user?.username}</h3>
-                  <div className="flex items-center space-x-1 text-gray-400">
+                <div className="text-center sm:text-left">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{user?.username}</h3>
+                  <div className="flex items-center justify-center sm:justify-start space-x-1 text-gray-400">
                     <Mail className="w-4 h-4" />
-                    <span>{user?.email}</span>
+                    <span className="break-all">{user?.email}</span>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4">
                   <div>
                     <label className="text-gray-400 text-sm">Telefone</label>
-                    <p className="text-white">{editData.phone || 'Nao informado'}</p>
+                    <p className="text-white text-sm sm:text-base">{editData.phone || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Empresa</label>
-                    <p className="text-white">{editData.company || 'Nao informado'}</p>
+                    <p className="text-white text-sm sm:text-base">{editData.company || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Cargo</label>
-                    <p className="text-white">{editData.position || 'Nao informado'}</p>
+                    <p className="text-white text-sm sm:text-base">{editData.position || 'Nao informado'}</p>
                   </div>
                   <div>
                     <label className="text-gray-400 text-sm">Membro desde</label>
-                    <p className="text-white">{new Date(profileStats.joinDate).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-white text-sm sm:text-base">{new Date(profileStats.joinDate).toLocaleDateString('pt-BR')}</p>
                   </div>
                 </div>
                 
                 {editData.bio && (
                   <div className="pt-4">
                     <label className="text-gray-400 text-sm">Bio</label>
-                    <p className="text-white mt-1">{editData.bio}</p>
+                    <p className="text-white mt-1 text-sm sm:text-base">{editData.bio}</p>
                   </div>
                 )}
               </>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-white text-sm font-medium mb-2 block">Nome de usuario</label>
                     <Input
@@ -275,7 +277,7 @@ export default function Perfil() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-white text-sm font-medium mb-2 block">Telefone</label>
                     <Input
@@ -381,9 +383,9 @@ export default function Perfil() {
       {/* Seguranca */}
       <StandardCard title="Segurança">
         {!showPasswordForm ? (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Key className="w-5 h-5" style={{ color: '#7fe41a' }} />
+              <Key className="w-5 h-5 flex-shrink-0" style={{ color: '#7fe41a' }} />
               <div>
                 <p className="text-white font-medium">Senha</p>
                 <p className="text-gray-400 text-sm">Altere sua senha regularmente para manter sua conta segura</p>
@@ -393,6 +395,7 @@ export default function Perfil() {
               onClick={() => setShowPasswordForm(true)}
               variant="outline"
               style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+              className="w-full sm:w-auto"
             >
               Alterar Senha
             </Button>
@@ -429,11 +432,11 @@ export default function Perfil() {
               />
             </div>
             
-            <div className="flex space-x-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button 
                 onClick={handleChangePassword}
                 style={{ backgroundColor: '#7fe41a', color: '#000000' }}
-                className="hover:opacity-90"
+                className="hover:opacity-90 w-full sm:w-auto"
               >
                 Alterar Senha
               </Button>
@@ -444,6 +447,7 @@ export default function Perfil() {
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
                 style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>

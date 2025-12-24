@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Navigate } from '@tanstack/react-router';
 import { useAuthStore } from '../stores/auth';
 import { Button } from '../components/ui/button';
 import NavButton from '../components/ui/NavButton';
 import { NotificationSystem, useNotifications } from '../components/NotificationSystem';
-import StatusIndicator from '../components/StatusIndicator';
 import Home from './Home';
-import Tarefas from './Tarefas';
-import Usuarios from './Usuarios';
-import Perfil from './Perfil';
+import Tasks from './Tasks';
+import Users from './Users';
+import Profile from './Profile';
 import jungleLogo from '../assets/jungle.svg';
 
 export default function Dashboard() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [currentPage, setCurrentPage] = useState('home');
   const { notifications, removeNotification, success, error: notifyError } = useNotifications();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Navegação entre páginas
   const renderCurrentPage = () => {
@@ -22,11 +22,11 @@ export default function Dashboard() {
       case 'home':
         return <Home />;
       case 'tarefas':
-        return <Tarefas />;
+        return <Tasks />;
       case 'usuarios':
-        return <Usuarios />;
+        return <Users />;
       case 'perfil':
-        return <Perfil />;
+        return <Profile />;
       default:
         return <Home />;
     }
@@ -35,30 +35,31 @@ export default function Dashboard() {
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
-
+ 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#2a2627' }}>
       {/* Header */}
-      <header 
+      <header
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg shadow-lg"
-        style={{ 
+        style={{
           backgroundColor: 'rgba(11, 8, 9, 0.8)',
           borderBottom: '1px solid rgba(127, 228, 26, 0.2)',
-          outlineColor: 'color-mix(in oklab, #7fe41a 50%, transparent)'
+          outlineColor: 'color-mix(in oklab, #7fe41a 50%, transparent)',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
+
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <img 
+              <img
                 src={jungleLogo}
-                alt="Jungle Logo" 
-                style={{width: '64px'}}
+                alt="Jungle Logo"
+                style={{ width: '64px' }}
               />
             </div>
 
-            {/* Navigation Menu */}
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-2">
               <NavButton
                 isActive={currentPage === 'home'}
@@ -86,22 +87,26 @@ export default function Dashboard() {
               </NavButton>
             </nav>
 
-            {/* Right side - User info and logout */}
+            {/* Right side */}
             <div className="flex items-center space-x-4">
+
+              {/* Desktop user info */}
               <div className="hidden md:flex items-center space-x-3">
                 <span className="text-sm" style={{ color: '#9f9fa9' }}>
                   Olá, {user?.username}!
                 </span>
               </div>
-              <Button 
-                onClick={logout} 
+
+              {/* Logout button (desktop + mobile) */}
+              <Button
+                onClick={logout}
                 variant="outline"
                 size="sm"
-                className="transition-all duration-200"
-                style={{ 
+                className="transition-all duration-200 hidden md:inline-flex"
+                style={{
                   color: '#ffffff',
                   borderColor: '#7fe41a',
-                  backgroundColor: 'transparent'
+                  backgroundColor: 'transparent',
                 }}
                 onMouseEnter={(e) => {
                   (e.target as HTMLElement).style.backgroundColor = '#7fe41a';
@@ -114,9 +119,110 @@ export default function Dashboard() {
               >
                 Sair
               </Button>
+
+              {/* Mobile menu button */}
+              <button
+                className="md:hidden flex items-center justify-center p-2 rounded-md"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  {isMobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div
+            className="md:hidden absolute top-full left-0 right-0 shadow-lg"
+            style={{
+              backgroundColor: 'rgba(11, 8, 9, 0.95)',
+              borderTop: '1px solid rgba(127, 228, 26, 0.2)',
+            }}
+          >
+            <div className="flex flex-col px-4 py-4 space-y-2">
+              <NavButton
+                isActive={currentPage === 'home'}
+                onClick={() => {
+                  setCurrentPage('home');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Home
+              </NavButton>
+
+              <NavButton
+                isActive={currentPage === 'tarefas'}
+                onClick={() => {
+                  setCurrentPage('tarefas');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Tarefas
+              </NavButton>
+
+              <NavButton
+                isActive={currentPage === 'usuarios'}
+                onClick={() => {
+                  setCurrentPage('usuarios');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Usuários
+              </NavButton>
+
+              <NavButton
+                isActive={currentPage === 'perfil'}
+                onClick={() => {
+                  setCurrentPage('perfil');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Perfil
+              </NavButton>
+
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <span className="block text-sm mb-3" style={{ color: '#9f9fa9' }}>
+                  Olá, {user?.username}
+                </span>
+
+                <Button
+                  onClick={logout}
+                  variant="outline"
+                  size="sm"
+                  style={{
+                    color: '#ffffff',
+                    borderColor: '#7fe41a',
+                    backgroundColor: 'transparent',
+                    width: '100%',
+                  }}
+                >
+                  Sair
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main style={{ paddingTop: '5rem' }}>
