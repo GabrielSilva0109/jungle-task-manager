@@ -37,12 +37,12 @@ interface NotificationEvent {
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { user, token } = useAuthStore();
+  const { user, tokens } = useAuthStore();
   const { success, info, error } = useNotifications();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   const connectSocket = () => {
-    if (!user || !token) return;
+    if (!user || !tokens) return;
 
     console.log('🔌 Connecting to WebSocket...');
 
@@ -60,7 +60,7 @@ export function useWebSocket() {
       setIsConnected(true);
       
       // Authenticate with JWT token
-      newSocket.emit('authenticate', { token });
+      newSocket.emit('authenticate', { token: tokens.accessToken });
       
       // Join user's room for personalized notifications
       newSocket.emit('join', { userId: user.id });
@@ -82,7 +82,7 @@ export function useWebSocket() {
         clearTimeout(reconnectTimeoutRef.current);
       }
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (user && token) {
+        if (user && tokens) {
           connectSocket();
         }
       }, 3000);
@@ -147,7 +147,7 @@ export function useWebSocket() {
   };
 
   useEffect(() => {
-    if (user && token) {
+    if (user && tokens) {
       connectSocket();
     } else {
       disconnect();
@@ -156,7 +156,7 @@ export function useWebSocket() {
     return () => {
       disconnect();
     };
-  }, [user, token]);
+  }, [user, tokens]);
 
   return {
     socket,

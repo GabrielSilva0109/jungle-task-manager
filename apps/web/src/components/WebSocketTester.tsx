@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/auth';
 export function WebSocketTester() {
   const { socket, isConnected } = useWebSocket();
   const { info, success, error } = useNotifications();
-  const { user, token } = useAuthStore();
+  const { user, tokens, isAuthenticated } = useAuthStore();
 
   const testTaskCreated = () => {
     if (!socket || !isConnected) {
@@ -22,7 +22,7 @@ export function WebSocketTester() {
         id: 'test-' + Date.now(),
         title: 'Tarefa de Teste WebSocket',
         description: 'Esta é uma tarefa criada para testar o WebSocket',
-        createdBy: user?.name || 'Usuário Teste',
+        createdBy: user?.username || 'Usuário Teste',
         createdAt: new Date().toISOString(),
       }
     };
@@ -44,7 +44,7 @@ export function WebSocketTester() {
         taskId: 'test-task-123',
         changes: {
           status: 'IN_PROGRESS',
-          updatedBy: user?.name || 'Usuário Teste',
+          updatedBy: user?.username || 'Usuário Teste',
           updatedAt: new Date().toISOString(),
         }
       }
@@ -67,7 +67,7 @@ export function WebSocketTester() {
         comment: {
           id: 'comment-' + Date.now(),
           content: 'Este é um comentário de teste via WebSocket',
-          createdBy: user?.name || 'Usuário Teste',
+          createdBy: user?.username || 'Usuário Teste',
           createdAt: new Date().toISOString(),
         }
       }
@@ -95,7 +95,7 @@ export function WebSocketTester() {
     success('Teste WebSocket', 'Notificação de teste enviada!');
   };
 
-  if (!user || !token) {
+  if (!user || !isAuthenticated) {
     return (
       <div className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
         <p className="text-sm text-yellow-800">
@@ -119,10 +119,10 @@ export function WebSocketTester() {
           </span>
         </div>
         
-        {token && (
+        {tokens && (
           <div className="flex items-center space-x-2 text-sm">
             <span className="font-medium">Usuário:</span>
-            <span className="text-gray-600">{user?.name}</span>
+            <span className="text-gray-600">{user?.username}</span>
           </div>
         )}
       </div>
