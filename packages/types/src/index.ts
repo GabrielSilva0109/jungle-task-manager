@@ -1,5 +1,6 @@
 import { IsEmail, IsString, MinLength, IsEnum, IsOptional, IsUUID, IsInt, Min, IsArray, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // Auth Types
 export interface AuthUser {
@@ -89,40 +90,50 @@ export enum NotificationType {
 
 // DTOs
 export class RegisterDto {
+  @ApiProperty({ example: 'user@example.com', description: 'User email address' })
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: 'johndoe', description: 'Username (minimum 3 characters)' })
   @IsString()
   @MinLength(3)
   username: string;
 
+  @ApiProperty({ example: 'password123', description: 'Password (minimum 6 characters)' })
   @IsString()
   @MinLength(6)
   password: string;
 }
 
 export class LoginDto {
+  @ApiProperty({ example: 'user@example.com', description: 'User email address' })
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: 'password123', description: 'User password' })
   @IsString()
   password: string;
 }
 
 export class CreateTaskDto {
+  @ApiProperty({ example: 'Implementar funcionalidade X', description: 'Task title' })
   @IsString()
   @MinLength(1)
   title: string;
 
+  @ApiProperty({ example: 'Detalhes da implementação...', description: 'Task description' })
   @IsString()
   description: string;
 
+  @ApiProperty({ enum: TaskPriority, example: TaskPriority.MEDIUM, description: 'Task priority level' })
   @IsEnum(TaskPriority)
   priority: TaskPriority;
 
+  @ApiProperty({ example: '2024-12-31T23:59:59.000Z', description: 'Task deadline' })
   @IsDateString()
   deadline: string;
 
+  @ApiPropertyOptional({ type: [String], example: ['uuid1', 'uuid2'], description: 'Array of user IDs to assign to this task' })
   @IsArray()
   @IsUUID(4, { each: true })
   @IsOptional()
@@ -130,26 +141,32 @@ export class CreateTaskDto {
 }
 
 export class UpdateTaskDto {
+  @ApiPropertyOptional({ example: 'Updated task title', description: 'Task title' })
   @IsString()
   @IsOptional()
   title?: string;
 
+  @ApiPropertyOptional({ example: 'Updated description...', description: 'Task description' })
   @IsString()
   @IsOptional()
   description?: string;
 
+  @ApiPropertyOptional({ enum: TaskStatus, example: TaskStatus.IN_PROGRESS, description: 'Task status' })
   @IsEnum(TaskStatus)
   @IsOptional()
   status?: TaskStatus;
 
+  @ApiPropertyOptional({ enum: TaskPriority, example: TaskPriority.HIGH, description: 'Task priority level' })
   @IsEnum(TaskPriority)
   @IsOptional()
   priority?: TaskPriority;
 
+  @ApiPropertyOptional({ example: '2024-12-31T23:59:59.000Z', description: 'Task deadline' })
   @IsDateString()
   @IsOptional()
   deadline?: string;
 
+  @ApiPropertyOptional({ type: [String], example: ['uuid1', 'uuid2'], description: 'Array of user IDs assigned to this task' })
   @IsArray()
   @IsUUID(4, { each: true })
   @IsOptional()
@@ -157,18 +174,21 @@ export class UpdateTaskDto {
 }
 
 export class CreateCommentDto {
+  @ApiProperty({ example: 'Este é um comentário sobre a tarefa...', description: 'Comment content' })
   @IsString()
   @MinLength(1)
   content: string;
 }
 
 export class PaginationDto {
+  @ApiPropertyOptional({ example: 1, description: 'Page number (starts from 1)', default: 1 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @IsOptional()
   page?: number = 1;
 
+  @ApiPropertyOptional({ example: 10, description: 'Number of items per page', default: 10 })
   @Type(() => Number)
   @IsInt()
   @Min(1)

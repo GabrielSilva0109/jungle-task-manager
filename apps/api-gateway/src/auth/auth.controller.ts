@@ -36,14 +36,38 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({ 
+    summary: 'Register a new user',
+    description: 'Create a new user account with email, username and password'
+  })
   @ApiResponse({
     status: 201,
-    description: 'User successfully registered',
-    type: 'AuthResponse',
+    description: 'User successfully registered with JWT tokens',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'uuid' },
+            email: { type: 'string', example: 'user@example.com' },
+            username: { type: 'string', example: 'johndoe' },
+            role: { type: 'string', example: 'USER' },
+            isActive: { type: 'boolean', example: true }
+          }
+        },
+        tokens: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string', example: 'jwt.access.token' },
+            refreshToken: { type: 'string', example: 'jwt.refresh.token' }
+          }
+        }
+      }
+    }
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 409, description: 'User already exists' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 409, description: 'Email or username already exists' })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
     return this.authService.register(registerDto);
   }
