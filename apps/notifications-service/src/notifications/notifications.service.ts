@@ -1,11 +1,9 @@
 import {
   Injectable,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import axios from 'axios';
 
 import { Notification } from '../entities/notification.entity';
 import { WebsocketGateway } from '../websocket/websocket.gateway';
@@ -20,8 +18,6 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepository: Repository<Notification>,
-    @Inject('AUTH_SERVICE')
-    private authClient: ClientProxy,
     private websocketGateway: WebsocketGateway,
   ) {}
 
@@ -92,14 +88,21 @@ export class NotificationsService {
     taskId: string;
     userId: string;
     assignedUserIds: string[];
+    task?: any;
   }) {
-    const { taskId, userId, assignedUserIds } = data;
+    const { taskId, userId, assignedUserIds, task } = data;
 
-    // Get creator info
+    console.log('📬 Handling task created event:', { taskId, userId, assignedUserIds });
+
     try {
-      const creator = await firstValueFrom(
-        this.authClient.send('auth.user', { userId }),
-      );
+      // Get creator info from auth service via HTTP
+      let creator = { username: 'Usuário' };
+      try {
+        const response = await axios.get(`http://auth-service:3002/user/${userId}`);
+        creator = response.data;
+      } catch (error) {
+        console.warn('Could not fetch creator info:', error);
+      }
 
       // Notify assigned users
       for (const assignedUserId of assignedUserIds) {
@@ -107,12 +110,14 @@ export class NotificationsService {
           await this.createNotification(
             assignedUserId,
             'Nova Tarefa Atribuída',
-            `${creator?.username || 'Alguém'} atribuiu uma nova tarefa para você.`,
+            `${creator?.username || 'Alguém'} atribuiu uma nova tarefa para você: ${task?.title || 'Tarefa'}`,
             NotificationType.TASK_ASSIGNED,
             taskId,
           );
         }
       }
+
+      console.log('✅ Task created notifications sent successfully');
     } catch (error) {
       console.error('Error handling task created:', error);
     }
@@ -123,21 +128,29 @@ export class NotificationsService {
     userId: string;
     changes: any;
     assignedUserIds: string[];
+    task?: any;
   }) {
-    const { taskId, userId, changes, assignedUserIds } = data;
+    const { taskId, userId, changes, assignedUserIds, task } = data;
+
+    console.log('📬 Handling task updated event:', { taskId, userId, changes });
 
     try {
-      const updater = await firstValueFrom(
-        this.authClient.send('auth.user', { userId }),
-      );
+      // Get updater info from auth service via HTTP
+      let updater = { username: 'Usuário' };
+      try {
+        const response = await axios.get(`http://auth-service:3002/user/${userId}`);
+        updater = response.data;
+      } catch (error) {
+        console.warn('Could not fetch updater info:', error);
+      }
 
       // Notify assigned users about updates
       for (const assignedUserId of assignedUserIds) {
         if (assignedUserId !== userId) {
-          let message = `${updater?.username || 'Alguém'} atualizou uma tarefa.`;
+          let message = `${updater?.username || 'Alguém'} atualizou a tarefa: ${task?.title || 'Tarefa'}`;
           
           if (changes.status) {
-            message = `${updater?.username || 'Alguém'} alterou o status da tarefa para ${changes.status}.`;
+            message = `${updater?.username || 'Alguém'} alterou o status da tarefa "${task?.title || 'Tarefa'}" para ${changes.status}.`;
           }
 
           await this.createNotification(
@@ -149,6 +162,8 @@ export class NotificationsService {
           );
         }
       }
+
+      console.log('✅ Task updated notifications sent successfully');
     } catch (error) {
       console.error('Error handling task updated:', error);
     }
@@ -158,21 +173,24 @@ export class NotificationsService {
     taskId: string;
     commentId: string;
     authorId: string;
+    comment: any;
   }) {
     const { taskId, authorId } = data;
+    console.log('📝 Handling comment created event:', { taskId, authorId });
 
     try {
-      const author = await firstValueFrom(
-        this.authClient.send('auth.user', { userId: authorId }),
+      // Create a simple notification without complex user fetching for now
+      await this.createNotification(
+        authorId, // For now, notify the author
+        'Novo Comentário',
+        `Comentário adicionado na tarefa`,
+        NotificationType.COMMENT_ADDED,
+        taskId,
       );
-
-      // For now, we'll need to get task assignments from the tasks service
-      // In a real implementation, you might want to cache this or have a different approach
-      // For simplicity, we'll skip this for now and focus on the WebSocket functionality
       
-      console.log(`New comment on task ${taskId} by ${author?.username}`);
+      console.log('✅ Comment notification created successfully');
     } catch (error) {
-      console.error('Error handling comment created:', error);
+      console.error('❌ Error handling comment created:', error);
     }
   }
 }

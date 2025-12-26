@@ -10,16 +10,6 @@ import { WebsocketModule } from '../websocket/websocket.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification]),
-    ClientsModule.register([
-      {
-        name: 'AUTH_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: process.env.AUTH_SERVICE_HOST || 'localhost',
-          port: parseInt(process.env.AUTH_SERVICE_PORT) || 3002,
-        },
-      },
-    ]),
     WebsocketModule,
   ],
   controllers: [NotificationsController],
