@@ -3,7 +3,7 @@ import { Navigate } from '@tanstack/react-router';
 import { useAuthStore } from '../stores/auth';
 import { Button } from '../components/ui/button';
 import NavButton from '../components/ui/NavButton';
-import { NotificationSystem, useNotifications } from '../components/NotificationSystem';
+import { WebSocketTester } from '../components/WebSocketTester';
 import Home from './Home';
 import Tasks from './Tasks';
 import Users from './Users';
@@ -13,7 +13,6 @@ import jungleLogo from '../assets/jungle.svg';
 export default function Dashboard() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [currentPage, setCurrentPage] = useState('home');
-  const { notifications, removeNotification, success, error: notifyError } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Navegação entre páginas
@@ -27,6 +26,13 @@ export default function Dashboard() {
         return <Users />;
       case 'perfil':
         return <Profile />;
+      case 'websocket':
+        return (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-2xl font-bold text-white mb-6">Testes WebSocket</h1>
+            <WebSocketTester />
+          </div>
+        );
       default:
         return <Home />;
     }
@@ -84,6 +90,12 @@ export default function Dashboard() {
                 onClick={() => setCurrentPage('perfil')}
               >
                 Perfil
+              </NavButton>
+              <NavButton
+                isActive={currentPage === 'websocket'}
+                onClick={() => setCurrentPage('websocket')}
+              >
+                WebSocket
               </NavButton>
             </nav>
 
@@ -201,6 +213,16 @@ export default function Dashboard() {
                 Perfil
               </NavButton>
 
+              <NavButton
+                isActive={currentPage === 'websocket'}
+                onClick={() => {
+                  setCurrentPage('websocket');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                WebSocket
+              </NavButton>
+
               <div className="border-t border-white/10 pt-4 mt-4">
                 <span className="block text-sm mb-3" style={{ color: '#9f9fa9' }}>
                   Olá, {user?.username}
@@ -228,11 +250,6 @@ export default function Dashboard() {
       <main style={{ paddingTop: '5rem' }}>
         {renderCurrentPage()}
       </main>
-
-      <NotificationSystem
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
     </div>
   );
 }

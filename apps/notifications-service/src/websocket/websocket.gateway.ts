@@ -51,6 +51,41 @@ export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnec
     console.log(`User ${userId} left`);
   }
 
+  @SubscribeMessage('authenticate')
+  handleAuthenticate(client: Socket, data: { token: string }) {
+    // For now, just acknowledge authentication
+    console.log(`Client ${client.id} authenticated`);
+    client.emit('authenticated', { success: true });
+  }
+
+  @SubscribeMessage('test-event')
+  handleTestEvent(client: Socket, data: any) {
+    console.log('📧 Test event received:', data);
+    
+    // Emit the test event to all connected clients
+    switch (data.type) {
+      case 'task:created':
+        this.server.emit('task:created', data.payload);
+        break;
+      case 'task:updated':
+        this.server.emit('task:updated', data.payload);
+        break;
+      case 'comment:new':
+        this.server.emit('comment:new', data.payload);
+        break;
+      default:
+        console.log(`Unknown test event type: ${data.type}`);
+    }
+  }
+
+  @SubscribeMessage('test-notification')
+  handleTestNotification(client: Socket, notification: any) {
+    console.log('🔔 Test notification received:', notification);
+    
+    // Emit notification to all connected clients
+    this.server.emit('notification', notification);
+  }
+
   sendNotificationToUser(userId: string, notification: any) {
     this.server.to(`user_${userId}`).emit('notification', notification);
   }

@@ -1,132 +1,174 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
 interface Notification {
   id: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: 'success' | 'info' | 'error' | 'warning';
   title: string;
   message: string;
-  timestamp: Date;
+  duration?: number;
 }
 
-interface NotificationSystemProps {
+interface NotificationContextValue {
   notifications: Notification[];
-  onRemove: (id: string) => void;
+  success: (title: string, message: string, duration?: number) => void;
+  info: (title: string, message: string, duration?: number) => void;
+  error: (title: string, message: string, duration?: number) => void;
+  warning: (title: string, message: string, duration?: number) => void;
+  remove: (id: string) => void;
 }
 
-export function NotificationSystem({ notifications, onRemove }: NotificationSystemProps) {
-  useEffect(() => {
-    notifications.forEach((notification) => {
-      const timer = setTimeout(() => {
-        onRemove(notification.id);
-      }, 5000); // Auto-remove after 5 seconds
+const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-      return () => clearTimeout(timer);
-    });
-  }, [notifications, onRemove]);
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  if (notifications.length === 0) return null;
+  const addNotification = useCallback((
+    type: Notification['type'],
+    title: string,
+    message: string,
+    duration = 5000
+  ) => {
+    const id = Math.random().toString(36).substring(2);
+    
+    setNotifications(prev => [...prev, { id, type, title, message, duration }]);
 
-  const getNotificationStyle = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return 'border-l-4 border-green-500 bg-green-50';
-      case 'error':
-        return 'border-l-4 border-red-500 bg-red-50';
-      case 'warning':
-        return 'border-l-4 border-yellow-500 bg-yellow-50';
-      case 'info':
-      default:
-        return 'border-l-4 border-blue-500 bg-blue-50';
+    if (duration > 0) {
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, duration);
     }
-  };
+  }, []);
 
-  const getIconForType = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return '✅';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-      default:
-        return 'ℹ️';
-    }
-  };
+  const remove = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const success = useCallback((title: string, message: string, duration?: number) => {
+    addNotification('success', title, message, duration);
+  }, [addNotification]);
+
+  const info = useCallback((title: string, message: string, duration?: number) => {
+    addNotification('info', title, message, duration);
+  }, [addNotification]);
+
+  const error = useCallback((title: string, message: string, duration?: number) => {
+    addNotification('error', title, message, duration);
+  }, [addNotification]);
+
+  const warning = useCallback((title: string, message: string, duration?: number) => {
+    addNotification('warning', title, message, duration);
+  }, [addNotification]);
 
   return (
-    <div className="fixed top-4 right-4 space-y-2 z-50">
+    <NotificationContext.Provider value={{
+      notifications,
+      success,
+      info,
+      error,
+      warning,
+      remove
+    }}>
+      {children}
+      <NotificationContainer notifications={notifications} onRemove={remove} />
+    </NotificationContext.Provider>
+  );
+}
+
+export function useNotifications() {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+}
+function NotificationContainer({ 
+  notifications, 
+  onRemove 
+}: { 
+  notifications: Notification[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
       {notifications.map((notification) => (
-        <Card
+        <NotificationToast
           key={notification.id}
-          className={`w-80 ${getNotificationStyle(notification.type)} shadow-lg`}
-        >
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex items-start space-x-3">
-                <span className="text-lg">
-                  {getIconForType(notification.type)}
-                </span>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">
-                    {notification.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {notification.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemove(notification.id)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          notification={notification}
+          onClose={() => onRemove(notification.id)}
+        />
       ))}
     </div>
   );
 }
 
-// Hook for managing notifications
-export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-
-  const addNotification = (
-    type: Notification['type'],
-    title: string,
-    message: string
-  ) => {
-    const notification: Notification = {
-      id: Date.now().toString(),
-      type,
-      title,
-      message,
-      timestamp: new Date(),
-    };
-    setNotifications(prev => [...prev, notification]);
+function NotificationToast({ 
+  notification, 
+  onClose 
+}: { 
+  notification: Notification;
+  onClose: () => void;
+}) {
+  const getIcon = () => {
+    switch (notification.type) {
+      case 'success':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'info':
+        return <Info className="w-5 h-5 text-blue-500" />;
+      case 'error':
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
+      case 'warning':
+        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      default:
+        return <Info className="w-5 h-5 text-blue-500" />;
+    }
   };
 
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const getBackgroundColor = () => {
+    switch (notification.type) {
+      case 'success':
+        return 'bg-green-50 border-green-200';
+      case 'info':
+        return 'bg-blue-50 border-blue-200';
+      case 'error':
+        return 'bg-red-50 border-red-200';
+      case 'warning':
+        return 'bg-yellow-50 border-yellow-200';
+      default:
+        return 'bg-blue-50 border-blue-200';
+    }
   };
 
-  return {
-    notifications,
-    addNotification,
-    removeNotification,
-    success: (title: string, message: string) => addNotification('success', title, message),
-    error: (title: string, message: string) => addNotification('error', title, message),
-    warning: (title: string, message: string) => addNotification('warning', title, message),
-    info: (title: string, message: string) => addNotification('info', title, message),
-  };
+  return (
+    <div className={`
+      max-w-sm w-full 
+      border rounded-lg shadow-lg
+      p-4 ${getBackgroundColor()}
+      animate-in slide-in-from-right
+      duration-300
+    `}>
+      <div className="flex items-start">
+        <div className="flex-shrink-0">
+          {getIcon()}
+        </div>
+        <div className="ml-3 w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900">
+            {notification.title}
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            {notification.message}
+          </p>
+        </div>
+        <div className="ml-4 flex-shrink-0 flex">
+          <button
+            className="bg-transparent rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={onClose}
+          >
+            <span className="sr-only">Close</span>
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
