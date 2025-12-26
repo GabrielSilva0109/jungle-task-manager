@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
 interface Notification {
@@ -22,6 +22,7 @@ const NotificationContext = createContext<NotificationContextValue | null>(null)
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const recentNotificationsRef = useRef<Set<string>>(new Set());
 
   const addNotification = useCallback((
     type: Notification['type'],
@@ -29,6 +30,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     message: string,
     duration = 5000
   ) => {
+    // Create a unique key for deduplication
+    const notificationKey = `${type}-${title}-${message}`;
+    
+    // Prevent duplicate notifications within 2 seconds
+    if (recentNotificationsRef.current.has(notificationKey)) {
+      console.log('🚫 Duplicate notification prevented:', { type, title, message });
+      return;
+    }
+    
+    recentNotificationsRef.current.add(notificationKey);
+    
+    // Remove from recent notifications after 2 seconds
+    setTimeout(() => {
+      recentNotificationsRef.current.delete(notificationKey);
+    }, 2000);
+    
     const id = Math.random().toString(36).substring(2);
     
     setNotifications(prev => [...prev, { id, type, title, message, duration }]);
@@ -90,7 +107,7 @@ function NotificationContainer({
   onRemove: (id: string) => void;
 }) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-3 w-96">
       {notifications.map((notification) => (
         <NotificationToast
           key={notification.id}
@@ -112,60 +129,62 @@ function NotificationToast({
   const getIcon = () => {
     switch (notification.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-6 h-6 text-green-600" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-6 h-6 text-blue-600" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-6 h-6 text-red-600" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-6 h-6 text-amber-600" />;
       default:
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-6 h-6 text-blue-600" />;
     }
   };
 
   const getBackgroundColor = () => {
     switch (notification.type) {
       case 'success':
-        return 'bg-green-50 border-green-200';
+        return 'bg-green-50 border-green-300 shadow-green-100';
       case 'info':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-blue-50 border-blue-300 shadow-blue-100';
       case 'error':
-        return 'bg-red-50 border-red-200';
+        return 'bg-red-50 border-red-300 shadow-red-100';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-amber-50 border-amber-300 shadow-amber-100';
       default:
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-blue-50 border-blue-300 shadow-blue-100';
     }
   };
 
   return (
     <div className={`
-      max-w-sm w-full 
-      border rounded-lg shadow-lg
-      p-4 ${getBackgroundColor()}
-      animate-in slide-in-from-right
-      duration-300
+      w-full min-w-0
+      border-2 rounded-xl shadow-xl
+      p-5 ${getBackgroundColor()}
+      transform transition-all duration-300 ease-in-out
+      hover:scale-105 hover:shadow-2xl
+      animate-in slide-in-from-right fade-in
+      backdrop-blur-sm
     `}>
-      <div className="flex items-start">
-        <div className="flex-shrink-0">
+      <div className="flex items-start space-x-4">
+        <div className="flex-shrink-0 pt-1">
           {getIcon()}
         </div>
-        <div className="ml-3 w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-semibold text-gray-900 leading-tight">
             {notification.title}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-700 leading-relaxed">
             {notification.message}
           </p>
         </div>
-        <div className="ml-4 flex-shrink-0 flex">
+        <div className="flex-shrink-0">
           <button
-            className="bg-transparent rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="bg-white/80 hover:bg-white rounded-full p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
             onClick={onClose}
           >
             <span className="sr-only">Close</span>
-            <X className="h-5 w-5" aria-hidden="true" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>

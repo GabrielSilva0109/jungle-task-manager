@@ -1,38 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../stores/auth';
 import { useNotifications } from '../components/NotificationSystem';
-
-interface WebSocketEvent {
-  type: string;
-  payload: any;
-}
-
-interface TaskCreatedEvent {
-  type: 'task:created';
-  payload: any;
-}
-
-interface TaskUpdatedEvent {
-  type: 'task:updated';
-  payload: {
-    taskId: string;
-    changes: any;
-  };
-}
-
-interface CommentCreatedEvent {
-  type: 'comment:new';
-  payload: {
-    taskId: string;
-    comment: any;
-  };
-}
-
-interface NotificationEvent {
-  type: 'notification';
-  payload: any;
-}
 
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
@@ -40,11 +9,20 @@ export function useWebSocket() {
   const { user, tokens } = useAuthStore();
   const { success, info, error } = useNotifications();
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const hasConnectedRef = useRef(false);
 
-  const connectSocket = () => {
-    if (!user || !tokens) return;
+  const connectSocket = useCallback(() => {
+    // Prevent multiple connections
+    if (socket?.connected || hasConnectedRef.current) {
+      return;
+    }
 
-    console.log('🔌 Connecting to WebSocket...');
+    if (!user || !tokens) {
+      console.log('❌ Missing user or tokens for WebSocket connection');
+      return;
+    }
+
+    hasConnectedRef.current = true;
 
     const newSocket = io('http://localhost:3004', {
       transports: ['websocket'],
@@ -53,10 +31,10 @@ export function useWebSocket() {
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
       timeout: 20000,
+      forceNew: true, 
     });
 
     newSocket.on('connect', () => {
-      console.log('✅ WebSocket connected');
       setIsConnected(true);
       
       // Authenticate with JWT token
@@ -65,17 +43,20 @@ export function useWebSocket() {
       // Join user's room for personalized notifications
       newSocket.emit('join', { userId: user.id });
       
-      success('Conectado', 'WebSocket conectado com sucesso!');
+      // Only show success toast once
+      if (!hasConnectedRef.current) {
+        success('Conectado', 'WebSocket conectado com sucesso!');
+      }
     });
 
     newSocket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
       setIsConnected(false);
+      hasConnectedRef.current = false;
     });
 
     newSocket.on('connect_error', (err) => {
-      console.error('WebSocket connection error:', err);
       setIsConnected(false);
+      hasConnectedRef.current = false;
       
       // Try to reconnect after delay
       if (reconnectTimeoutRef.current) {
@@ -88,14 +69,14 @@ export function useWebSocket() {
       }, 3000);
     });
 
-    // Listen for real-time events
+    // Listen for real-time events (remove duplicates by using once)
+    newSocket.off('task:created');
     newSocket.on('task:created', (data: any) => {
-      console.log('📝 New task created:', data);
       info('Nova Tarefa', `Tarefa criada: ${data.title || 'Nova tarefa'}`);
     });
 
+    newSocket.off('task:updated');
     newSocket.on('task:updated', (data: { taskId: string; changes: any }) => {
-      console.log('🔄 Task updated:', data);
       const { taskId, changes } = data;
       
       let message = 'Tarefa atualizada';
@@ -106,13 +87,13 @@ export function useWebSocket() {
       info('Tarefa Atualizada', message);
     });
 
+    newSocket.off('comment:new');
     newSocket.on('comment:new', (data: { taskId: string; comment: any }) => {
-      console.log('💬 New comment:', data);
       info('Novo Comentário', `Novo comentário adicionado na tarefa`);
     });
 
+    newSocket.off('notification');
     newSocket.on('notification', (notification: any) => {
-      console.log('🔔 New notification:', notification);
       const { title, message, type } = notification;
       
       switch (type) {
@@ -133,10 +114,11 @@ export function useWebSocket() {
     setSocket(newSocket);
 
     return newSocket;
-  };
+  }, [user, tokens, socket]);
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (socket) {
+      socket.off(); 
       socket.disconnect();
       setSocket(null);
       setIsConnected(false);
@@ -144,12 +126,13 @@ export function useWebSocket() {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-  };
+    hasConnectedRef.current = false;
+  }, [socket]);
 
   useEffect(() => {
-    if (user && tokens) {
+    if (user && tokens && !socket?.connected) {
       connectSocket();
-    } else {
+    } else if (!user || !tokens) {
       disconnect();
     }
 

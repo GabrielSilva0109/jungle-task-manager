@@ -1,12 +1,29 @@
-import { useQuery } from '@tanstack/react-query';
-import { useParams, Navigate } from '@tanstack/react-router';
-import { ArrowLeft, MessageCircle, Clock, User } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams, Navigate, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, MessageCircle, Clock, User, Edit, Trash2, Plus, Send, X, AlertTriangle, Save } from 'lucide-react';
+import { useState } from 'react';
 import { useAuthStore } from '../stores/auth';
 import { tasksApi, commentsApi } from '../services/api';
+import { Button } from '../components/ui/button';
+import { Textarea } from '../components/ui/textarea';
+import { Input } from '../components/ui/input';
+import { Badge } from '../components/ui/badge';
 
 export default function TaskDetail() {
   const { taskId } = useParams({ strict: false });
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [newComment, setNewComment] = useState('');
+  const [isAddingComment, setIsAddingComment] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    priority: '',
+    status: ''
+  });
 
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
@@ -20,16 +37,122 @@ export default function TaskDetail() {
     enabled: !!taskId && isAuthenticated,
   });
 
+  const addCommentMutation = useMutation({
+    mutationFn: (content: string) => commentsApi.createComment(taskId!, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', taskId] });
+      setNewComment('');
+    },
+    onError: (error) => {
+      console.error('Erro ao adicionar comentário:', error);
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: (data: any) => tasksApi.updateTask(taskId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar tarefa:', error);
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: () => tasksApi.deleteTask(taskId!),
+    onSuccess: () => {
+      navigate({ to: '/' });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir tarefa:', error);
+    },
+  });
+
+  const handleBack = () => {
+    navigate({ to: '/' });
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    setIsAddingComment(true);
+    try {
+      await addCommentMutation.mutateAsync(newComment.trim());
+    } catch (error) {
+      console.error('Erro ao adicionar comentário:', error);
+    }
+    setIsAddingComment(false);
+  };
+
+  const handleDeleteTask = () => {
+    deleteTaskMutation.mutate();
+    setShowDeleteModal(false);
+  };
+
+  const handleEditTask = () => {
+    if (task) {
+      setEditForm({
+        title: task.title,
+        description: task.description || '',
+        priority: task.priority,
+        status: task.status
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    updateTaskMutation.mutate({
+      title: editForm.title,
+      description: editForm.description,
+      priority: editForm.priority.toUpperCase(),
+      status: editForm.status.toUpperCase()
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    if (task) {
+      setEditForm({
+        title: task.title,
+        description: task.description || '',
+        priority: task.priority,
+        status: task.status
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'todo': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'done': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
 
   if (taskLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Carregando tarefa...</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#2a2627' }}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+            <p className="mt-2 text-gray-300">Carregando tarefa...</p>
+          </div>
         </div>
       </div>
     );
@@ -37,22 +160,43 @@ export default function TaskDetail() {
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Tarefa não encontrada.</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#2a2627' }}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-300 text-xl">Tarefa não encontrada.</p>
+            <Button 
+              onClick={handleBack}
+              className="mt-4"
+              style={{ backgroundColor: '#7fe41a', color: '#0b0809' }}
+            >
+              Voltar
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#2a2627' }}>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header 
+        className="shadow-lg"
+        style={{
+          backgroundColor: 'rgba(11, 8, 9, 0.8)',
+          borderBottom: '1px solid rgba(127, 228, 26, 0.2)',
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-6">
-            <button className="mr-4 text-gray-400 hover:text-gray-600">
+            <button 
+              onClick={handleBack}
+              className="mr-4 text-gray-400 hover:text-white transition-colors duration-200 flex items-center gap-2"
+            >
               <ArrowLeft className="w-6 h-6" />
+              <span className="hidden sm:inline">Voltar</span>
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">{task.title}</h1>
+            <h1 className="text-2xl font-bold text-white">{task.title}</h1>
           </div>
         </div>
       </header>
@@ -61,83 +205,191 @@ export default function TaskDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Task Details */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Detalhes da Tarefa</h2>
+            <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-white">Detalhes da Tarefa</h2>
+                {!isEditing && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleEditTask}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Descrição</label>
-                  <p className="mt-1 text-gray-900">{task.description}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+              {isEditing ? (
+                // Edit Mode
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {task.status.replace('_', ' ')}
-                    </span>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Título</label>
+                    <Input
+                      value={editForm.title}
+                      onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Prioridade</label>
-                    <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      {task.priority}
-                    </span>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                    <Textarea
+                      value={editForm.description}
+                      onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                      className="bg-gray-700 border-gray-600 text-white"
+                      rows={4}
+                    />
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Prazo</label>
-                  <div className="mt-1 flex items-center text-gray-900">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {new Date(task.deadline).toLocaleDateString()}
-                  </div>
-                </div>
-                
-                {task.assignedUsers && task.assignedUsers.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Atribuído a</label>
-                    <div className="mt-1 space-y-1">
-                      {task.assignedUsers.map((user) => (
-                        <div key={user.id} className="flex items-center text-gray-900">
-                          <User className="w-4 h-4 mr-2" />
-                          {user.username} ({user.email})
-                        </div>
-                      ))}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2"
+                      >
+                        <option value="TODO">TODO</option>
+                        <option value="IN_PROGRESS">EM PROGRESSO</option>
+                        <option value="DONE">CONCLUÍDA</option>
+                        <option value="CANCELLED">CANCELADA</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Prioridade</label>
+                      <select
+                        value={editForm.priority}
+                        onChange={(e) => setEditForm({...editForm, priority: e.target.value})}
+                        className="w-full bg-gray-700 border-gray-600 text-white rounded-md px-3 py-2"
+                      >
+                        <option value="LOW">BAIXA</option>
+                        <option value="MEDIUM">MÉDIA</option>
+                        <option value="HIGH">ALTA</option>
+                      </select>
                     </div>
                   </div>
-                )}
-              </div>
+                  
+                  <div className="flex gap-3 pt-4">
+                    <Button 
+                      onClick={handleSaveEdit}
+                      disabled={updateTaskMutation.isPending}
+                      style={{ backgroundColor: '#7fe41a', color: '#0b0809' }}
+                      className="hover:bg-green-400"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {updateTaskMutation.isPending ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      className="text-gray-300 border-gray-600 hover:bg-gray-700"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                // View Mode
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                    <p className="text-gray-100 bg-gray-700 p-4 rounded-lg">{task.description || 'Nenhuma descrição fornecida.'}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                      <Badge className={`${getStatusColor(task.status)}`}>
+                        {task.status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Prioridade</label>
+                      <Badge className={`${getPriorityColor(task.priority)}`}>
+                        {task.priority}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Prazo</label>
+                    <div className="flex items-center text-gray-100 bg-gray-700 p-3 rounded-lg">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {task.deadline ? new Date(task.deadline).toLocaleDateString('pt-BR') : 'Sem prazo definido'}
+                    </div>
+                  </div>
+                  
+                  {task.assignedUsers && task.assignedUsers.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Atribuído a</label>
+                      <div className="space-y-2">
+                        {task.assignedUsers.map((assignedUser) => (
+                          <div key={assignedUser.id} className="flex items-center text-gray-100 bg-gray-700 p-3 rounded-lg">
+                            <User className="w-4 h-4 mr-2" />
+                            {assignedUser.username} ({assignedUser.email})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Comments */}
-            <div className="mt-6 bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <div className="mt-6 bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center">
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Comentários ({commentsData?.data.length || 0})
               </h3>
               
+              {/* Add comment form */}
+              <div className="mb-6 space-y-3">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Adicionar um comentário..."
+                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 resize-none"
+                  rows={3}
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleAddComment}
+                    disabled={!newComment.trim() || isAddingComment}
+                    style={{ backgroundColor: '#7fe41a', color: '#0b0809' }}
+                    className="hover:bg-green-400"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {isAddingComment ? 'Enviando...' : 'Comentar'}
+                  </Button>
+                </div>
+              </div>
+              
               {commentsLoading ? (
-                <p className="text-gray-500">Carregando comentários...</p>
+                <p className="text-gray-400">Carregando comentários...</p>
               ) : (
                 <div className="space-y-4">
                   {commentsData?.data.map((comment) => (
-                    <div key={comment.id} className="border-l-4 border-blue-200 pl-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">
+                    <div key={comment.id} className="border-l-4 border-green-500 pl-4 bg-gray-700 p-4 rounded-r-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-white">
                           {comment.author.username}
                         </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(comment.createdAt).toLocaleString()}
+                        <span className="text-xs text-gray-400">
+                          {new Date(comment.createdAt).toLocaleString('pt-BR')}
                         </span>
                       </div>
-                      <p className="text-gray-700">{comment.content}</p>
+                      <p className="text-gray-200">{comment.content}</p>
                     </div>
                   ))}
                   
                   {commentsData?.data.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">
-                      Nenhum comentário ainda.
+                    <p className="text-gray-400 text-center py-8 bg-gray-700 rounded-lg">
+                      Nenhum comentário ainda. Seja o primeiro a comentar!
                     </p>
                   )}
                 </div>
@@ -147,39 +399,89 @@ export default function TaskDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Ações</h3>
-              <div className="space-y-2">
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Editar Tarefa
-                </button>
-                <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                  Adicionar Comentário
-                </button>
-                <button className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-medium text-white mb-4">Ações</h3>
+              <div className="space-y-3">
+                <Button 
+                  className="w-full"
+                  style={{ backgroundColor: '#7fe41a', color: '#0b0809' }}
+                  onClick={handleEditTask}
+                  disabled={isEditing}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {isEditing ? 'Editando...' : 'Editar Tarefa'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Excluir Tarefa
-                </button>
+                </Button>
               </div>
             </div>
             
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Informações</h3>
-              <div className="space-y-2 text-sm">
-                <p>
-                  <span className="font-medium">Criado em:</span>
-                  <br />
-                  {new Date(task.createdAt).toLocaleString()}
-                </p>
-                <p>
-                  <span className="font-medium">Atualizado em:</span>
-                  <br />
-                  {new Date(task.updatedAt).toLocaleString()}
-                </p>
+            <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-medium text-white mb-4">Informações</h3>
+              <div className="space-y-3 text-sm">
+                <div className="p-3 bg-gray-700 rounded-lg">
+                  <span className="font-medium text-gray-300 block">Criado em:</span>
+                  <span className="text-gray-100">
+                    {new Date(task.createdAt).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="p-3 bg-gray-700 rounded-lg">
+                  <span className="font-medium text-gray-300 block">Atualizado em:</span>
+                  <span className="text-gray-100">
+                    {new Date(task.updatedAt).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="p-3 bg-gray-700 rounded-lg">
+                  <span className="font-medium text-gray-300 block">Criado por:</span>
+                  <span className="text-gray-100">
+                    {task.createdBy || 'Usuário desconhecido'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-400 mr-3" />
+              <h3 className="text-lg font-medium text-white">Confirmar Exclusão</h3>
+            </div>
+            
+            <p className="text-gray-300 mb-6">
+              Tem certeza que deseja excluir a tarefa "<span className="font-medium text-white">{task?.title}</span>"? 
+              Esta ação não pode ser desfeita.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-300 border-gray-600 hover:bg-gray-700"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleDeleteTask}
+                disabled={deleteTaskMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleteTaskMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

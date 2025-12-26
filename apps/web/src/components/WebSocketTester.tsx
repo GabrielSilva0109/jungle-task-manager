@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from './ui/button';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useNotifications } from './NotificationSystem';
@@ -9,7 +9,7 @@ export function WebSocketTester() {
   const { info, success, error } = useNotifications();
   const { user, tokens, isAuthenticated } = useAuthStore();
 
-  const testTaskCreated = () => {
+  const testTaskCreated = useCallback(() => {
     if (!socket || !isConnected) {
       error('WebSocket', 'Não conectado ao WebSocket');
       return;
@@ -30,9 +30,9 @@ export function WebSocketTester() {
     // Emit test event
     socket.emit('test-event', testEvent);
     success('Teste WebSocket', 'Evento de teste enviado!');
-  };
+  }, [socket, isConnected, error, success, user?.username]);
 
-  const testTaskUpdated = () => {
+  const testTaskUpdated = useCallback(() => {
     if (!socket || !isConnected) {
       error('WebSocket', 'Não conectado ao WebSocket');
       return;
@@ -52,9 +52,9 @@ export function WebSocketTester() {
 
     socket.emit('test-event', testEvent);
     success('Teste WebSocket', 'Evento de atualização enviado!');
-  };
+  }, [socket, isConnected, error, success, user?.username]);
 
-  const testComment = () => {
+  const testComment = useCallback(() => {
     if (!socket || !isConnected) {
       error('WebSocket', 'Não conectado ao WebSocket');
       return;
@@ -75,9 +75,9 @@ export function WebSocketTester() {
 
     socket.emit('test-event', testEvent);
     success('Teste WebSocket', 'Evento de comentário enviado!');
-  };
+  }, [socket, isConnected, error, success, user?.username]);
 
-  const testNotification = () => {
+  const testNotification = useCallback(() => {
     if (!socket || !isConnected) {
       error('WebSocket', 'Não conectado ao WebSocket');
       return;
@@ -93,7 +93,7 @@ export function WebSocketTester() {
 
     socket.emit('test-notification', testNotification);
     success('Teste WebSocket', 'Notificação de teste enviada!');
-  };
+  }, [socket, isConnected, error, success, user?.id]);
 
   if (!user || !isAuthenticated) {
     return (

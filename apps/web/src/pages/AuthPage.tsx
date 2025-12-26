@@ -8,7 +8,6 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useAuthStore } from '../stores/auth';
-import { authApi } from '../services/api';
 import jungleLogo from '../assets/jungle.svg';
 
 // Validation schemas

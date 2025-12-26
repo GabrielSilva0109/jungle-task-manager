@@ -4,9 +4,10 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
-import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
 import { tasksApi } from '../services/api';
 import { useAuthStore } from '../stores/auth';
+import { useNavigate } from '@tanstack/react-router';
 
 enum TaskPriority {
   LOW = 'LOW',
@@ -44,6 +45,7 @@ interface Task {
 
 export default function Tasks() {
   const { user, tokens, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -141,6 +143,10 @@ export default function Tasks() {
     task.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleViewTask = (taskId: string) => {
+    navigate({ to: `/tasks/${taskId}` });
+  };
+
   const handleCreateTask = async () => {
     if (newTask.title.trim()) {
       try {
@@ -152,17 +158,9 @@ export default function Tasks() {
           deadline: newTask.dueDate || '2024-12-31T23:59:59.000Z'
         };
 
-        console.log('📋 Creating task:', taskData);
-        console.log('🏪 Auth Store - User:', user);
-        console.log('🏪 Auth Store - Tokens:', tokens);
-        console.log('🏪 Auth Store - isAuthenticated:', isAuthenticated);
-        
         const authData = localStorage.getItem('auth-storage');
         if (authData) {
           const { state } = JSON.parse(authData);
-          console.log('👤 Current user ID from localStorage:', state.user?.id);
-          console.log('👤 User data:', state.user);
-          console.log('🔑 Tokens from localStorage:', state.tokens);
         } else {
           console.log('❌ No auth data found in localStorage');
         }
@@ -471,8 +469,19 @@ export default function Tasks() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
+                    className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                    onClick={() => handleViewTask(task.id)}
+                    title="Ver detalhes"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                     onClick={() => handleEditTask(task)}
+                    title="Editar tarefa"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -482,6 +491,7 @@ export default function Tasks() {
                     size="sm" 
                     className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                     onClick={() => handleDeleteTask(task.id)}
+                    title="Excluir tarefa"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -516,6 +526,15 @@ export default function Tasks() {
                 </div>
                 
                 <div className="flex gap-2 items-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-green-400 hover:text-green-300 hover:bg-green-400/10 px-3"
+                    onClick={() => handleViewTask(task.id)}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  
                   <Button 
                     variant="ghost" 
                     size="sm" 

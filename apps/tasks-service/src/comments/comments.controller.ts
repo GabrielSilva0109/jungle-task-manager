@@ -25,8 +25,8 @@ export class CommentsController {
     @Body() createCommentDto: CreateCommentDto,
     @Request() req: any,
   ) {
-    // For now, we'll use a hardcoded userId. In production, this would come from JWT
-    const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
+    // Get userId from header (sent by API Gateway)
+    const userId = req.headers['x-user-id'] || '8f366c55-7522-4142-956f-21c348dda0ee';
     return this.commentsService.create(taskId, createCommentDto, userId);
   }
 

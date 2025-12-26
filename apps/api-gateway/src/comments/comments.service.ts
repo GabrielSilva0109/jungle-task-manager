@@ -10,10 +10,15 @@ export class CommentsService {
 
   async create(taskId: string, createCommentDto: CreateCommentDto, userId: string) {
     try {
-      const response = await axios.post(`${this.tasksServiceUrl}/tasks/${taskId}/comments`, {
-        ...createCommentDto,
-        userId,
-      });
+      const response = await axios.post(`${this.tasksServiceUrl}/tasks/${taskId}/comments`, 
+        createCommentDto,
+        {
+          headers: {
+            'x-user-id': userId,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
       return response.data;
     } catch (error) {
       throw error;
