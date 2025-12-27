@@ -37,10 +37,18 @@ export default function TaskDetail() {
     enabled: !!taskId && isAuthenticated,
   });
 
+
+  const creatorId =
+    typeof task?.createdBy === 'object'
+      ? task?.createdBy?.id
+      : typeof task?.createdBy === 'string'
+      ? task?.createdBy
+      : undefined;
+
   const { data: taskCreator } = useQuery({
-    queryKey: ['user', task?.createdBy],
-    queryFn: () => authApi.getUser(task!.createdBy),
-    enabled: !!task?.createdBy,
+    queryKey: ['user', creatorId],
+    queryFn: () => authApi.getUser(creatorId!),
+    enabled: !!creatorId,
   });
 
   const addCommentMutation = useMutation({
@@ -474,7 +482,7 @@ export default function TaskDetail() {
                 <div className="p-3 bg-gray-700 rounded-lg">
                   <span className="font-medium text-gray-300 block">Criado por:</span>
                   <span className="text-gray-100">
-                    {taskCreator?.username || task.createdBy || 'Usuário desconhecido'}
+                    {taskCreator?.username ? taskCreator.username : (task.createdBy || 'Usuário desconhecido')}
                   </span>
                 </div>
               </div>
