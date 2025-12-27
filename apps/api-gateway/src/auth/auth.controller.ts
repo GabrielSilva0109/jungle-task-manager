@@ -123,6 +123,15 @@ export class AuthController {
     return this.authService.getUsers(userId);
   }
 
+  @Get('users/:id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, description: 'User information' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUser(@Param('id') id: string) {
+    return this.authService.getUser(id);
+  }
+
   @Patch('users/:id')
   // Temporarily remove auth guard for testing
   // @UseGuards(JwtAuthGuard)

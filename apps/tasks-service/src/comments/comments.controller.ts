@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -47,5 +48,16 @@ export class CommentsStandaloneController {
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.commentsService.findOne(id);
+  }
+
+  @Delete(':id')
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    // Get userId from header (sent by API Gateway)
+    const userId = req.headers['x-user-id'] || '8f366c55-7522-4142-956f-21c348dda0ee';
+    await this.commentsService.remove(id, userId);
+    return { message: 'Comment deleted successfully' };
   }
 }

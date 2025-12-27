@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Navigate, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, MessageCircle, Clock, User, Edit, Trash2, Plus, Send, X, AlertTriangle, Save } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Clock, User, Edit, Trash2, Send, X, AlertTriangle, Save } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../stores/auth';
-import { tasksApi, commentsApi } from '../services/api';
+import { tasksApi, commentsApi, authApi } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Input } from '../components/ui/input';
@@ -37,6 +37,12 @@ export default function TaskDetail() {
     enabled: !!taskId && isAuthenticated,
   });
 
+  const { data: taskCreator } = useQuery({
+    queryKey: ['user', task?.createdBy],
+    queryFn: () => authApi.getUser(task!.createdBy),
+    enabled: !!task?.createdBy,
+  });
+
   const addCommentMutation = useMutation({
     mutationFn: (content: string) => commentsApi.createComment(taskId!, { content }),
     onSuccess: () => {
@@ -56,6 +62,16 @@ export default function TaskDetail() {
     },
     onError: (error) => {
       console.error('Erro ao atualizar tarefa:', error);
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => commentsApi.deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', taskId] });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir comentário:', error);
     },
   });
 
@@ -82,6 +98,12 @@ export default function TaskDetail() {
       console.error('Erro ao adicionar comentário:', error);
     }
     setIsAddingComment(false);
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este comentário?')) {
+      deleteCommentMutation.mutate(commentId);
+    }
   };
 
   const handleDeleteTask = () => {
@@ -377,11 +399,23 @@ export default function TaskDetail() {
                     <div key={comment.id} className="border-l-4 border-green-500 pl-4 bg-gray-700 p-4 rounded-r-lg">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-white">
-                          {comment.author.username}
+                          {comment.author?.username || 'Usuário Desconhecido'}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(comment.createdAt).toLocaleString('pt-BR')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400">
+                            {new Date(comment.createdAt).toLocaleString('pt-BR')}
+                          </span>
+                          {comment.author?.id === user?.id && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="text-red-400 hover:text-red-300 p-1"
+                              title="Excluir comentário"
+                              disabled={deleteCommentMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p className="text-gray-200">{comment.content}</p>
                     </div>
@@ -440,7 +474,7 @@ export default function TaskDetail() {
                 <div className="p-3 bg-gray-700 rounded-lg">
                   <span className="font-medium text-gray-300 block">Criado por:</span>
                   <span className="text-gray-100">
-                    {task.createdBy || 'Usuário desconhecido'}
+                    {taskCreator?.username || task.createdBy || 'Usuário desconhecido'}
                   </span>
                 </div>
               </div>

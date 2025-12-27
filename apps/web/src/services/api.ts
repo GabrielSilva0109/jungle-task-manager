@@ -100,6 +100,8 @@ export const authApi = {
     api.post('/auth/refresh', { refreshToken }).then(res => res.data),
   getUsers: (): Promise<any[]> =>
     api.get('/auth/users').then(res => res.data),
+  getUser: (id: string): Promise<any> =>
+    api.get(`/auth/users/${id}`).then(res => res.data),
   updateUser: (id: string, data: { role?: string; isActive?: boolean }): Promise<any> =>
     api.patch(`/auth/users/${id}`, data).then(res => res.data),
   updateProfile: (id: string, data: { username?: string; email?: string; bio?: string; phone?: string; company?: string; position?: string }): Promise<any> =>
@@ -128,6 +130,8 @@ export const commentsApi = {
     api.get(`/tasks/${taskId}/comments`, { params }).then(res => res.data),
   createComment: (taskId: string, data: CreateCommentDto): Promise<Comment> =>
     api.post(`/tasks/${taskId}/comments`, data).then(res => res.data),
+  deleteComment: (commentId: string): Promise<void> =>
+    api.delete(`/comments/${commentId}`).then(() => undefined),
 };
 
 // Notifications API

@@ -37,4 +37,17 @@ export class CommentsService {
       throw error;
     }
   }
+
+  async remove(commentId: string, userId: string) {
+    try {
+      const response = await axios.delete(`${this.tasksServiceUrl}/comments/${commentId}`, {
+        headers: {
+          'x-user-id': userId,
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

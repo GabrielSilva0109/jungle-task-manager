@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   ParseUUIDPipe,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -41,5 +42,22 @@ export class CommentsController {
     @Query() paginationDto: PaginationDto,
   ) {
     return this.commentsService.findByTask(taskId, paginationDto);
+  }
+}
+
+// Separate controller for comment operations by ID
+@Controller('comments')
+@UseGuards(JwtAuthGuard)
+export class CommentsStandaloneController {
+  constructor(private readonly commentsService: CommentsService) {}
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a comment' })
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as any;
+    return this.commentsService.remove(id, user.userId);
   }
 }
