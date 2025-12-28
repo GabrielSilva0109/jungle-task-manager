@@ -103,4 +103,10 @@ export class TasksController {
     const currentUserId = userId || (req?.user && (req.user as any).userId) || '8f366c55-7522-4142-956f-21c348dda0ee';
     return this.tasksService.remove(id, currentUserId);
   }
+
+  @Get(':id/audit-log')
+  @ApiOperation({ summary: 'Get audit log for a task' })
+  getAuditLog(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tasksService.getAuditLog(id);
+  }
 }

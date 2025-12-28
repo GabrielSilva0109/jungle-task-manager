@@ -101,7 +101,7 @@ export const authApi = {
   getUsers: (): Promise<any[]> =>
     api.get('/auth/users').then(res => res.data),
   getUser: (id: string): Promise<any> =>
-    api.get(`/auth/user/${id}`).then(res => res.data),
+    api.get(`/auth/users/${id}`).then(res => res.data),
   updateUser: (id: string, data: { role?: string; isActive?: boolean }): Promise<any> =>
     api.patch(`/auth/users/${id}`, data).then(res => res.data),
   updateProfile: (id: string, data: { username?: string; email?: string; bio?: string; phone?: string; company?: string; position?: string }): Promise<any> =>
@@ -122,6 +122,8 @@ export const tasksApi = {
     api.patch(`/tasks/${id}`, data).then(res => res.data),
   deleteTask: (id: string): Promise<void> =>
     api.delete(`/tasks/${id}`).then(() => undefined),
+  getAuditLog: (id: string): Promise<any[]> =>
+    api.get(`/tasks/${id}/audit-log`).then(res => res.data),
 };
 
 // Comments API

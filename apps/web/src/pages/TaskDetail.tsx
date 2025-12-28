@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/badge';
 export default function TaskDetail() {
   const { taskId } = useParams({ strict: false });
   const { isAuthenticated, user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
@@ -25,6 +26,13 @@ export default function TaskDetail() {
     status: ''
   });
 
+    // Audit log
+  const { data: auditLog, isLoading: auditLoading } = useQuery({
+    queryKey: ['audit-log', taskId],
+    queryFn: () => tasksApi.getAuditLog(taskId!),
+    enabled: !!taskId && isAuthenticated,
+  });
+
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
     queryFn: () => tasksApi.getTask(taskId!),
@@ -36,7 +44,6 @@ export default function TaskDetail() {
     queryFn: () => commentsApi.getComments(taskId!, { page: 1, size: 50 }),
     enabled: !!taskId && isAuthenticated,
   });
-
 
   const creatorId =
     typeof task?.createdBy === 'object'
@@ -66,6 +73,7 @@ export default function TaskDetail() {
     mutationFn: (data: any) => tasksApi.updateTask(taskId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['audit-log', taskId] });
       setIsEditing(false);
     },
     onError: (error) => {
@@ -238,16 +246,26 @@ export default function TaskDetail() {
             <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-white">Detalhes da Tarefa</h2>
-                {!isEditing && (
+                <div>
+                  {!isEditing && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleEditTask}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={handleEditTask}
-                    className="text-gray-400 hover:text-white"
+                    className="text-gray-400 hover:bg-red-400 hover:text-white"
+                    onClick={() => setShowDeleteModal(true)}
                   >
-                    <Edit className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 mr-2" />
                   </Button>
-                )}
+                </div>
               </div>
               
               {isEditing ? (
@@ -442,29 +460,6 @@ export default function TaskDetail() {
           {/* Sidebar */}
           <div className="space-y-6">
             <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
-              <h3 className="text-lg font-medium text-white mb-4">Ações</h3>
-              <div className="space-y-3">
-                <Button 
-                  className="w-full"
-                  style={{ backgroundColor: '#7fe41a', color: '#0b0809' }}
-                  onClick={handleEditTask}
-                  disabled={isEditing}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {isEditing ? 'Editando...' : 'Editar Tarefa'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir Tarefa
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
               <h3 className="text-lg font-medium text-white mb-4">Informações</h3>
               <div className="space-y-3 text-sm">
                 <div className="p-3 bg-gray-700 rounded-lg">
@@ -489,6 +484,47 @@ export default function TaskDetail() {
             </div>
           </div>
         </div>
+
+        {/* Audit Log (apenas para admin) */}
+        {isAdmin && (
+          <div className="mt-6 bg-gray-800 shadow-xl rounded-lg p-6 border border-gray-700">
+              <h3 className="text-lg font-medium text-white mb-4 flex items-center">
+                <Clock className="w-5 h-5 mr-2" />
+                Histórico de Alterações
+              </h3>
+              {auditLoading ? (
+                <p className="text-gray-400">Carregando histórico...</p>
+              ) : auditLog && auditLog.length > 0 ? (
+                <div className="space-y-4">
+                  {auditLog.map((log) => (
+                    <div key={log.id} className="border-l-4 border-yellow-500 pl-4 bg-gray-700 p-4 rounded-r-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-yellow-300">
+                          {log.action}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
+                        </span>
+                      </div>
+                      <pre className="text-gray-200 text-xs whitespace-pre-wrap break-all">
+                        {log.oldValue && log.newValue
+                          ? `De: ${JSON.stringify(log.oldValue, null, 2)}\nPara: ${JSON.stringify(log.newValue, null, 2)}`
+                          : log.oldValue
+                          ? `Antes: ${JSON.stringify(log.oldValue, null, 2)}`
+                          : log.newValue
+                          ? `Depois: ${JSON.stringify(log.newValue, null, 2)}`
+                          : ''}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-8 bg-gray-700 rounded-lg">
+                  Nenhuma alteração registrada para esta tarefa.
+                </p>
+              )}
+          </div>
+        )}
       </main>
 
       {/* Delete Confirmation Modal */}

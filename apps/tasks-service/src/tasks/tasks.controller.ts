@@ -80,4 +80,9 @@ export class TasksController {
     const userId = req.user?.userId || '8f366c55-7522-4142-956f-21c348dda0ee';
     return this.tasksService.remove(id, userId);
   }
+
+  @Get(':id/audit-log')
+  async getAuditLog(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tasksService.getAuditLog(id);
+  }
 }

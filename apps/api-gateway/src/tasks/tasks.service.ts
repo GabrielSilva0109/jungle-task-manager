@@ -85,4 +85,13 @@ export class TasksService {
       throw error;
     }
   }
+  
+  async getAuditLog(id: string) {
+    try {
+      const response = await axios.get(`${this.tasksServiceUrl}/tasks/${id}/audit-log`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

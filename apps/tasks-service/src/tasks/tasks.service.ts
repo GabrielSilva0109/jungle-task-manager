@@ -229,4 +229,8 @@ export class TasksService {
       await this.assignUsers(taskId, userIds);
     }
   }
+
+  async getAuditLog(taskId: string) {
+    return this.auditService.findByTask(taskId);
+  }
 }
