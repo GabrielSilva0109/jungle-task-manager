@@ -11,6 +11,9 @@
     "sourceMap": true,
     "outDir": "./build",
     "baseUrl": "./",
+    "paths": {
+      "@jungle/types": ["../../packages/types/dist"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@jungle/types": "file:../.."
+  }
+}

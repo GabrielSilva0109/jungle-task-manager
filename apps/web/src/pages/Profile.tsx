@@ -60,7 +60,7 @@ export default function Profile() {
       const allTasks = tasksResponse.data;
       
       // Filter tasks for current user (in a real app, this would be done server-side)
-      const userTasks = allTasks; // For now, showing all tasks since we don't have user-specific filtering
+      const userTasks = allTasks; 
       
       const completed = userTasks.filter(task => task.status === 'DONE').length;
       const inProgress = userTasks.filter(task => task.status === 'IN_PROGRESS').length;

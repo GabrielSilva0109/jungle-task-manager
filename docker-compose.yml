@@ -88,8 +88,6 @@ services:
     volumes:
       - .:/app
       - ./packages:/app/packages
-      - /app/node_modules
-      - /app/apps/tasks-service/node_modules
     environment:
       - NODE_ENV=development
       - PORT=3003
