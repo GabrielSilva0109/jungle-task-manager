@@ -229,14 +229,6 @@ export default function Users() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Usuários</h1>
           <p className="text-gray-400 text-sm sm:text-base">Gerencie todos os usuários do sistema</p>
         </div>
-        
-        <Button 
-          style={{ backgroundColor: '#7fe41a', color: '#000000' }}
-          className="hover:opacity-90 w-full sm:w-auto"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Novo Usuário
-        </Button>
       </div>
 
       {/* Cards de estatísticas */}

@@ -87,16 +87,7 @@ export default function Home() {
         <StandardCard 
           title="🏆 Ranking de Produtividade" 
           description="Usuários que mais concluíram tarefas"
-          headerAction={
-            <Button 
-              variant="outline" 
-              size="sm"
-              style={{ borderColor: 'rgba(127, 228, 26, 0.3)', color: '#7fe41a' }}
-              onClick={() => {}}
-            >
-              Ver Todos
-            </Button>
-          }
+          
         >
           <div className="space-y-4">
             {usersRanking?.length > 0 ? (

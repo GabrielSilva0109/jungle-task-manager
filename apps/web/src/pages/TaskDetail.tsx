@@ -18,6 +18,9 @@ export default function TaskDetail() {
   const [newComment, setNewComment] = useState('');
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     title: '',
@@ -116,10 +119,23 @@ export default function TaskDetail() {
     setIsAddingComment(false);
   };
 
+
   const handleDeleteComment = (commentId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este comentário?')) {
-      deleteCommentMutation.mutate(commentId);
+    setCommentToDelete(commentId);
+    setShowDeleteCommentModal(true);
+  };
+
+  const confirmDeleteComment = () => {
+    if (commentToDelete) {
+      deleteCommentMutation.mutate(commentToDelete);
+      setShowDeleteCommentModal(false);
+      setCommentToDelete(null);
     }
+  };
+
+  const cancelDeleteComment = () => {
+    setShowDeleteCommentModal(false);
+    setCommentToDelete(null);
   };
 
   const handleDeleteTask = () => {
@@ -496,27 +512,40 @@ export default function TaskDetail() {
                 <p className="text-gray-400">Carregando histórico...</p>
               ) : auditLog && auditLog.length > 0 ? (
                 <div className="space-y-4">
-                  {auditLog.map((log) => (
-                    <div key={log.id} className="border-l-4 border-yellow-500 pl-4 bg-gray-700 p-4 rounded-r-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-yellow-300">
-                          {log.action}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
-                        </span>
+                  {auditLog.map((log) => {
+                    const isExpanded = expandedLogs[log.id];
+                    return (
+                      <div
+                        key={log.id}
+                        className={`border-l-4 border-yellow-500 pl-4 bg-gray-700 p-4 rounded-r-lg transition-all duration-200 cursor-pointer`}
+                        style={{ maxHeight: isExpanded ? '1000px' : '200px', overflow: isExpanded ? 'visible' : 'hidden' }}
+                        onClick={() => setExpandedLogs((prev) => ({ ...prev, [log.id]: !isExpanded }))}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-yellow-300">
+                            {log.action}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
+                          </span>
+                        </div>
+                        <pre className="text-gray-200 text-xs whitespace-pre-wrap break-all">
+                          {log.oldValue && log.newValue
+                            ? `De: ${JSON.stringify(log.oldValue, null, 2)}\nPara: ${JSON.stringify(log.newValue, null, 2)}`
+                            : log.oldValue
+                            ? `Antes: ${JSON.stringify(log.oldValue, null, 2)}`
+                            : log.newValue
+                            ? `Depois: ${JSON.stringify(log.newValue, null, 2)}`
+                            : ''}
+                        </pre>
+                        {!isExpanded && (
+                          <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t to-transparent flex items-end justify-center pointer-events-none">
+                            <span className="text-xs text-yellow-200 bg-gray-700 px-2 rounded pointer-events-auto">Clique para expandir</span>
+                          </div>
+                        )}
                       </div>
-                      <pre className="text-gray-200 text-xs whitespace-pre-wrap break-all">
-                        {log.oldValue && log.newValue
-                          ? `De: ${JSON.stringify(log.oldValue, null, 2)}\nPara: ${JSON.stringify(log.newValue, null, 2)}`
-                          : log.oldValue
-                          ? `Antes: ${JSON.stringify(log.oldValue, null, 2)}`
-                          : log.newValue
-                          ? `Depois: ${JSON.stringify(log.newValue, null, 2)}`
-                          : ''}
-                      </pre>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-400 text-center py-8 bg-gray-700 rounded-lg">
@@ -527,7 +556,7 @@ export default function TaskDetail() {
         )}
       </main>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Task Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
@@ -535,12 +564,10 @@ export default function TaskDetail() {
               <AlertTriangle className="w-6 h-6 text-red-400 mr-3" />
               <h3 className="text-lg font-medium text-white">Confirmar Exclusão</h3>
             </div>
-            
             <p className="text-gray-300 mb-6">
               Tem certeza que deseja excluir a tarefa "<span className="font-medium text-white">{task?.title}</span>"? 
               Esta ação não pode ser desfeita.
             </p>
-            
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
@@ -555,6 +582,37 @@ export default function TaskDetail() {
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 {deleteTaskMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Comment Confirmation Modal */}
+      {showDeleteCommentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-400 mr-3" />
+              <h3 className="text-lg font-medium text-white">Confirmar Exclusão</h3>
+            </div>
+            <p className="text-gray-300 mb-6">
+              Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={cancelDeleteComment}
+                className="text-black border-gray-600"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmDeleteComment}
+                disabled={deleteCommentMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleteCommentMutation.isPending ? 'Excluindo...' : 'Excluir'}
               </Button>
             </div>
           </div>
