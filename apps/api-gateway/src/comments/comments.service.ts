@@ -10,7 +10,7 @@ export class CommentsService {
 
   async create(taskId: string, createCommentDto: CreateCommentDto, userId: string) {
     try {
-      const response = await axios.post(`${this.tasksServiceUrl}/tasks/${taskId}/comments`, 
+      const response = await axios.post<any>(`${this.tasksServiceUrl}/tasks/${taskId}/comments`, 
         createCommentDto,
         {
           headers: {
@@ -31,7 +31,7 @@ export class CommentsService {
       if (paginationDto.page) params.append('page', paginationDto.page.toString());
       if (paginationDto.size) params.append('size', paginationDto.size.toString());
       
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks/${taskId}/comments?${params.toString()}`);
+      const response = await axios.get<any>(`${this.tasksServiceUrl}/tasks/${taskId}/comments?${params.toString()}`);
       return response.data;
     } catch (error) {
       throw error;

@@ -11,7 +11,7 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto, userId: string) {
     try {
       // Send userId in x-user-id header to tasks-service
-      const response = await axios.post(
+      const response = await axios.post<any>(
         `${this.tasksServiceUrl}/tasks`, 
         createTaskDto,
         {
@@ -39,7 +39,7 @@ export class TasksService {
         headers['x-user-id'] = userId;
       }
       
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks`, { 
+      const response = await axios.get<any>(`${this.tasksServiceUrl}/tasks`, { 
         params,
         headers 
       });
@@ -51,7 +51,7 @@ export class TasksService {
 
   async findOne(id: string) {
     try {
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks/${id}`);
+      const response = await axios.get<any>(`${this.tasksServiceUrl}/tasks/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -61,7 +61,7 @@ export class TasksService {
   async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
     try {
       // Send userId in x-user-id header to tasks-service
-      const response = await axios.patch(
+      const response = await axios.patch<any>(
         `${this.tasksServiceUrl}/tasks/${id}`, 
         updateTaskDto,
         {
@@ -79,7 +79,7 @@ export class TasksService {
   async remove(id: string, userId: string) {
     try {
       // Don't send userId in body, let tasks-service handle user context
-      const response = await axios.delete(`${this.tasksServiceUrl}/tasks/${id}`);
+      const response = await axios.delete<any>(`${this.tasksServiceUrl}/tasks/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -88,7 +88,7 @@ export class TasksService {
   
   async getAuditLog(id: string) {
     try {
-      const response = await axios.get(`${this.tasksServiceUrl}/tasks/${id}/audit-log`);
+      const response = await axios.get<any>(`${this.tasksServiceUrl}/tasks/${id}/audit-log`);
       return response.data;
     } catch (error) {
       throw error;

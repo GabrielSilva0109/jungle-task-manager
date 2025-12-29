@@ -1,3 +1,16 @@
+import axios from 'axios';
+// @ts-ignore
+import axiosRetry from 'axios-retry';
+// Configura retry global para todas as requisições axios (ex: ECONNREFUSED ao subir serviços)
+axiosRetry(axios, {
+  retries: 5,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    // Retry em falhas de rede e 5xx
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response && error.response.status >= 500);
+  },
+});
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';

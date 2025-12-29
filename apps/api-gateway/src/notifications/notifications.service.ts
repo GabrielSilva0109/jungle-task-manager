@@ -14,7 +14,7 @@ export class NotificationsService {
       if (paginationDto.page) params.append('page', paginationDto.page.toString());
       if (paginationDto.size) params.append('size', paginationDto.size.toString());
       
-      const response = await axios.get(`${this.notificationsServiceUrl}/notifications/${userId}?${params.toString()}`);
+      const response = await axios.get<any>(`${this.notificationsServiceUrl}/notifications/${userId}?${params.toString()}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -23,7 +23,7 @@ export class NotificationsService {
 
   async markAsRead(id: string) {
     try {
-      const response = await axios.patch(`${this.notificationsServiceUrl}/notifications/${id}/read`);
+      const response = await axios.patch<any>(`${this.notificationsServiceUrl}/notifications/${id}/read`);
       return response.data;
     } catch (error) {
       throw error;
@@ -32,7 +32,7 @@ export class NotificationsService {
 
   async markAllAsRead(userId: string) {
     try {
-      const response = await axios.patch(`${this.notificationsServiceUrl}/notifications/read-all`, {
+      const response = await axios.patch<any>(`${this.notificationsServiceUrl}/notifications/read-all`, {
         userId,
       });
       return response.data;

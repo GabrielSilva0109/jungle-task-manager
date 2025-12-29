@@ -2,15 +2,10 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy all files
 COPY . .
 
-# Install dependencies
-RUN cd apps/auth-service && npm install
-RUN cd packages/types && npm install
+RUN npm install
 
-# Expose port
-EXPOSE 3002
+WORKDIR /app/apps/auth-service
 
-# Development mode  
-CMD ["sh", "-c", "cd apps/auth-service && npm run start:dev"]
+CMD ["npm", "run", "start:dev"]

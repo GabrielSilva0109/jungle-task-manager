@@ -32,9 +32,10 @@ export class CommentsService {
   private async getUserInfo(userId: string): Promise<{ username: string; email: string } | null> {
     try {
       const response = await axios.get(`${this.authServiceUrl}/user/${userId}`);
+      const data = response.data as { username: string; email: string };
       return {
-        username: response.data.username,
-        email: response.data.email,
+        username: data.username,
+        email: data.email,
       };
     } catch (error) {
       console.log(`Failed to fetch user info for ${userId}:`, error instanceof Error ? error.message : error);

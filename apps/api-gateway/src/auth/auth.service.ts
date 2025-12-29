@@ -16,7 +16,7 @@ import {
 
 @Injectable()
 export class AuthService {
-  private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3002';
+  private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3010';
 
   constructor(
     private jwtService: JwtService,
@@ -24,8 +24,8 @@ export class AuthService {
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/register`, registerDto);
-      return response.data;
+      const response = await axios.post<AuthResponse>(`${this.authServiceUrl}/register`, registerDto);
+      return response.data as AuthResponse;
     } catch (error: any) {
       if (error.response) {
         // Repassar o erro do auth-service com a mensagem específica
@@ -44,8 +44,8 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/login`, loginDto);
-      return response.data;
+      const response = await axios.post<AuthResponse>(`${this.authServiceUrl}/login`, loginDto);
+      return response.data as AuthResponse;
     } catch (error: any) {
       if (error.response) {
         // Repassar o erro do auth-service com a mensagem específica
@@ -62,8 +62,8 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     try {
-      const response = await axios.post(`${this.authServiceUrl}/refresh`, { refreshToken });
-      return response.data;
+      const response = await axios.post<AuthTokens>(`${this.authServiceUrl}/refresh`, { refreshToken });
+      return response.data as AuthTokens;
     } catch (error) {
       throw error;
     }
@@ -87,7 +87,7 @@ export class AuthService {
 
   async getUser(userId: string): Promise<any> {
     try {
-      const response = await axios.get(`${this.authServiceUrl}/user/${userId}`);
+      const response = await axios.get<any>(`${this.authServiceUrl}/user/${userId}`);
       return response.data;
     } catch (error) {
       return null;
@@ -96,7 +96,7 @@ export class AuthService {
 
   async getUsers(requestingUserId: string): Promise<any[]> {
     try {
-      const response = await axios.get(`${this.authServiceUrl}/users`, {
+      const response = await axios.get<any[]>(`${this.authServiceUrl}/users`, {
         headers: {
           'x-user-id': requestingUserId
         }
@@ -109,7 +109,7 @@ export class AuthService {
 
   async updateUser(userId: string, updateData: { role?: string; isActive?: boolean }, requestingUserId: string): Promise<any> {
     try {
-      const response = await axios.patch(`${this.authServiceUrl}/users/${userId}`, updateData, {
+      const response = await axios.patch<any>(`${this.authServiceUrl}/users/${userId}`, updateData, {
         headers: {
           'x-user-id': requestingUserId
         }
@@ -122,7 +122,7 @@ export class AuthService {
 
   async deleteUser(userId: string, requestingUserId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await axios.delete(`${this.authServiceUrl}/users/${userId}`, {
+      const response = await axios.delete<{ success: boolean; message: string }>(`${this.authServiceUrl}/users/${userId}`, {
         headers: {
           'x-user-id': requestingUserId
         }

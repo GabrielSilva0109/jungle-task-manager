@@ -24,7 +24,7 @@ export function useWebSocket() {
 
     hasConnectedRef.current = true;
 
-    const newSocket = io('http://localhost:3004', {
+    const newSocket = io('http://localhost:3001', {
       transports: ['websocket'],
       autoConnect: true,
       reconnection: true,

@@ -4,11 +4,11 @@ import axios from 'axios';
 @Injectable()
 export class StatsService {
   private readonly tasksServiceUrl = process.env.TASKS_SERVICE_URL || 'http://tasks-service:3003';
-  private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3002';
+  private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3010';
   async getDashboardStats(userId: string) {
     try {
       // Fetch tasks for the specific user
-      const allTasksResponse = await axios.get(`${this.tasksServiceUrl}/tasks`, {
+      const allTasksResponse = await axios.get<any>(`${this.tasksServiceUrl}/tasks`, {
         params: { 
           page: 1, 
           size: 1000, // Get all tasks
@@ -59,7 +59,7 @@ export class StatsService {
   async getUserStats(userId: string) {
     try {
       // Fetch user statistics from auth service
-      const usersResponse = await axios.get(`${this.authServiceUrl}/users`);
+      const usersResponse = await axios.get<any[]>(`${this.authServiceUrl}/users`);
       const users = usersResponse.data;
       
       // Calculate user statistics
@@ -94,14 +94,14 @@ export class StatsService {
   async getUsersRanking(userId: string) {
     try {
       // Get all users from auth service
-      const usersResponse = await axios.get(`${this.authServiceUrl}/users`);
+      const usersResponse = await axios.get<any[]>(`${this.authServiceUrl}/users`);
       const users = usersResponse.data;
 
       // Get completed tasks count for each user
       const userRankings = await Promise.all(
         users.map(async (user) => {
           try {
-            const tasksResponse = await axios.get(`${this.tasksServiceUrl}/tasks`, {
+            const tasksResponse = await axios.get<any>(`${this.tasksServiceUrl}/tasks`, {
               params: { 
                 page: 1, 
                 size: 1000,

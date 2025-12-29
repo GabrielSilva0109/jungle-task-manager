@@ -16,8 +16,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 
 import { TasksService } from './tasks.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateTaskDto, UpdateTaskDto, PaginationDto, TaskStatus } from '@jungle/types';
+import { CreateTaskDto, UpdateTaskDto, TaskStatus } from '@jungle/types';
 
 @ApiTags('Tasks')
 @Controller('tasks')

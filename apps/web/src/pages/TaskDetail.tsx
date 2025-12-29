@@ -252,7 +252,7 @@ export default function TaskDetail() {
                       variant="ghost" 
                       size="sm"
                       onClick={handleEditTask}
-                      className="text-gray-400 hover:text-white"
+                      className="text-gray-400"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -263,7 +263,7 @@ export default function TaskDetail() {
                     className="text-gray-400 hover:bg-red-400 hover:text-white"
                     onClick={() => setShowDeleteModal(true)}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export default function TaskDetail() {
                     <Button 
                       variant="outline"
                       onClick={handleCancelEdit}
-                      className="text-gray-300 border-gray-600 hover:bg-gray-700"
+                      className="text-black border-gray-600"
                     >
                       <X className="w-4 h-4 mr-2" />
                       Cancelar
@@ -545,7 +545,7 @@ export default function TaskDetail() {
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteModal(false)}
-                className="text-gray-300 border-gray-600 hover:bg-gray-700"
+                className="text-black border-gray-600"
               >
                 Cancelar
               </Button>

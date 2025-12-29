@@ -1,8 +1,9 @@
+
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-// import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { AppModule } from './app.module';
+import seedAdminUser from './seed-admin';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,16 @@ async function bootstrap() {
       transform: true,
     })
   );
+
+  // Seed admin user após app inicializar
+  const port = configService.get<number>('PORT') || 3010;
+  await app.listen(port);
+  try {
+    await seedAdminUser(app);
+  } catch (err) {
+    console.error('Erro ao criar admin user:', err);
+  }
+  console.log(`Auth Service is running on port ${port}`);
 
   // Skip microservice setup for now - using HTTP directly
   // const rmqUrl = configService.get<string>('RABBITMQ_URL');
@@ -32,10 +43,6 @@ async function bootstrap() {
 
   // await app.startAllMicroservices();
   
-  const port = configService.get<number>('PORT') || 3002;
-  await app.listen(port);
-  
-  console.log(`Auth Service is running on port ${port}`);
 }
 
 bootstrap();

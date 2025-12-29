@@ -2,15 +2,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy all files
+# Copia todos os arquivos do projeto
 COPY . .
 
-# Install dependencies
-RUN cd apps/notifications-service && npm install
-RUN cd packages/types && npm install
+# Instala todas as dependências do monorepo
+RUN npm install
 
-# Expose port
+# Expõe a porta do serviço
 EXPOSE 3004
 
-# Development mode  
-CMD ["sh", "-c", "cd apps/notifications-service && npm run start:dev"]
+# Inicia o serviço em modo desenvolvimento
+WORKDIR /app/apps/notifications-service
+CMD ["npm", "run", "start:dev"]
