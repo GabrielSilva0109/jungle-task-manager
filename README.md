@@ -1,7 +1,5 @@
 # 🎯 Jungle Task Manager - Sistema de Gestão de Tarefas Colaborativo
 
-Um sistema completo de gestão de tarefas desenvolvido como desafio técnico para a vaga de Full-stack Developer Júnior na Jungle Gaming.
-
 ## 📋 Visão Geral
 
 O Jungle Task Manager é uma aplicação web colaborativa que permite gerenciar tarefas em equipe, com autenticação, comentários, notificações em tempo real via WebSocket e arquitetura de microserviços.
