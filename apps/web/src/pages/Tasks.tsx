@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import StandardCard from '../components/ui/StandardCard';
-import { Plus, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { tasksApi } from '../services/api';
 import { useAuthStore } from '../stores/auth';
 import { useNavigate } from '@tanstack/react-router';
@@ -51,6 +51,9 @@ export default function Tasks() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateError, setDateError] = useState<string>('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<{
     title: string;
@@ -148,7 +151,19 @@ export default function Tasks() {
   };
 
   const handleCreateTask = async () => {
+    setDateError('');
     if (newTask.title.trim()) {
+      // Verificação de data
+      if (newTask.dueDate) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const dueDate = new Date(newTask.dueDate);
+        dueDate.setHours(0,0,0,0);
+        if (dueDate < today) {
+          setDateError('A data de entrega não pode ser anterior a hoje.');
+          return;
+        }
+      }
       try {
         const taskData = {
           title: newTask.title,
@@ -223,15 +238,27 @@ export default function Tasks() {
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
+  const handleDeleteTask = (taskId: string) => {
+    setTaskToDelete(taskId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (taskToDelete) {
       try {
-        await tasksApi.deleteTask(taskId);
-        await loadTasks(); // Recarregar tarefas
+        await tasksApi.deleteTask(taskToDelete);
+        await loadTasks();
       } catch (error) {
         console.error('Erro ao excluir tarefa:', error);
       }
+      setShowDeleteModal(false);
+      setTaskToDelete(null);
     }
+  };
+
+  const cancelDeleteTask = () => {
+    setShowDeleteModal(false);
+    setTaskToDelete(null);
   };
 
   return (
@@ -257,6 +284,9 @@ export default function Tasks() {
       {showCreateForm && (
         <StandardCard title="Criar Nova Tarefa" className="mb-6">
           <div className="space-y-4">
+            {dateError && (
+              <div className="text-red-500 text-sm mb-2">{dateError}</div>
+            )}
             <div>
               <label className="text-white text-sm font-medium mb-2 block">Título</label>
               <Input
@@ -569,6 +599,36 @@ export default function Tasks() {
           </StandardCard>
         )}
       </div>
+
+      {/* Modal de confirmação de exclusão de tarefa */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-400 mr-3" />
+              <h3 className="text-lg font-medium text-white">Confirmar Exclusão</h3>
+            </div>
+            <p className="text-gray-300 mb-6">
+              Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={cancelDeleteTask}
+                className="text-black border-gray-600"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmDeleteTask}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Excluir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
