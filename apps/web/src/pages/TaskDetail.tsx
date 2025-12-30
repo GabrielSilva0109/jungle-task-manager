@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Navigate, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, MessageCircle, Clock, User, Edit, Trash2, Send, X, AlertTriangle, Save } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Clock, User, Edit, Trash2, Send, X, AlertTriangle, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../stores/auth';
 import { tasksApi, commentsApi, authApi } from '../services/api';
@@ -517,17 +517,24 @@ export default function TaskDetail() {
                     return (
                       <div
                         key={log.id}
-                        className={`border-l-4 border-yellow-500 pl-4 bg-gray-700 p-4 rounded-r-lg transition-all duration-200 cursor-pointer`}
+                        className={`relative border-l-4 border-yellow-500 pl-4 bg-gray-700 p-4 rounded-r-lg transition-all duration-200 cursor-pointer select-none`}
                         style={{ maxHeight: isExpanded ? '1000px' : '200px', overflow: isExpanded ? 'visible' : 'hidden' }}
                         onClick={() => setExpandedLogs((prev) => ({ ...prev, [log.id]: !isExpanded }))}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-yellow-300">
+                          <span className="text-sm font-medium text-yellow-300 flex items-center gap-2">
                             {log.action}
                           </span>
-                          <span className="text-xs text-gray-400">
-                            {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400">
+                              {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-yellow-300" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-yellow-300" />
+                            )}
+                          </div>
                         </div>
                         <pre className="text-gray-200 text-xs whitespace-pre-wrap break-all">
                           {log.oldValue && log.newValue
@@ -538,11 +545,6 @@ export default function TaskDetail() {
                             ? `Depois: ${JSON.stringify(log.newValue, null, 2)}`
                             : ''}
                         </pre>
-                        {!isExpanded && (
-                          <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t to-transparent flex items-end justify-center pointer-events-none">
-                            <span className="text-xs text-yellow-200 bg-gray-700 px-2 rounded pointer-events-auto">Clique para expandir</span>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
